@@ -42,7 +42,7 @@ export default function RegisterPage() {
             await axios.post('/api/auth/register', form, { withCredentials: true });
             await axios.post('/api/auth/login', { email: form.email, password: form.password }, { withCredentials: true });
             await refetch();
-            navigate('/dashboard');
+            navigate('/');
         } catch (err) {
             setError(err.response?.data?.error || 'Registration failed. Please try again.');
         } finally {

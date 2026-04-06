@@ -5,6 +5,7 @@ import axios from 'axios';
 export default function Navbar() {
     const { pathname } = useLocation();
     const isAuth = pathname === '/login' || pathname === '/register';
+    const isAdmin = pathname.startsWith('/admin');
     const { user, refetch } = useAuth();
     const navigate = useNavigate();
 
@@ -18,8 +19,8 @@ export default function Navbar() {
         }
     };
 
-    // Hide navbar completely on auth pages — they have their own full-screen layout
-    if (isAuth) return null;
+    // Hide navbar on auth pages and admin pages (admin has its own Sidebar)
+    if (isAuth || isAdmin) return null;
 
     return (
         <nav className="fixed top-0 w-full z-50 bg-gray-900/60 backdrop-blur-sm border-b border-gray-100/10 transition-all duration-300">
