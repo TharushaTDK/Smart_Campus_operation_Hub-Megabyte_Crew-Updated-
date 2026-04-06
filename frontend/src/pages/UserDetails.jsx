@@ -25,10 +25,10 @@ export default function UserDetails() {
         <div className="min-h-[calc(100vh-80px)] bg-gray-50 py-16 px-6 relative mt-20">
             <div className="max-w-3xl mx-auto">
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-
+                    
                     {/* Header Banner */}
                     <div className="h-32 bg-gradient-to-r from-blue-600 to-indigo-700"></div>
-
+                    
                     <div className="px-8 pb-8">
                         {/* Avatar */}
                         <div className="relative -mt-16 mb-6 flex justify-between items-end">

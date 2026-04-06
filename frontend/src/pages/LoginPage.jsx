@@ -82,43 +82,43 @@ export default function LoginPage() {
                     <div className="mb-8">
                         <svg viewBox="0 0 400 300" className="w-full max-w-md mx-auto opacity-90">
                             {/* Sky */}
-                            <rect width="400" height="300" fill="none" />
+                            <rect width="400" height="300" fill="none"/>
                             {/* Ground */}
-                            <rect x="0" y="220" width="400" height="80" fill="rgba(34,197,94,0.2)" rx="4" />
+                            <rect x="0" y="220" width="400" height="80" fill="rgba(34,197,94,0.2)" rx="4"/>
                             {/* Main building */}
-                            <rect x="120" y="80" width="160" height="140" fill="rgba(59,130,246,0.3)" stroke="rgba(147,197,253,0.5)" strokeWidth="1.5" rx="4" />
-                            <rect x="170" y="160" width="60" height="60" fill="rgba(59,130,246,0.5)" stroke="rgba(147,197,253,0.6)" strokeWidth="1.5" />
+                            <rect x="120" y="80" width="160" height="140" fill="rgba(59,130,246,0.3)" stroke="rgba(147,197,253,0.5)" strokeWidth="1.5" rx="4"/>
+                            <rect x="170" y="160" width="60" height="60" fill="rgba(59,130,246,0.5)" stroke="rgba(147,197,253,0.6)" strokeWidth="1.5"/>
                             {/* Windows grid */}
-                            {[0, 1, 2, 3].map(row => [0, 1, 2].map(col => (
-                                <rect key={`${row}-${col}`} x={140 + col * 40} y={100 + row * 25} width="20" height="15"
+                            {[0,1,2,3].map(row => [0,1,2].map(col => (
+                                <rect key={`${row}-${col}`} x={140+col*40} y={100+row*25} width="20" height="15"
                                     fill={Math.random() > 0.4 ? "rgba(253,224,71,0.7)" : "rgba(99,102,241,0.3)"}
-                                    stroke="rgba(147,197,253,0.4)" strokeWidth="0.5" rx="2" />
+                                    stroke="rgba(147,197,253,0.4)" strokeWidth="0.5" rx="2"/>
                             )))}
                             {/* Roof */}
-                            <polygon points="110,80 200,30 290,80" fill="rgba(99,102,241,0.4)" stroke="rgba(165,180,252,0.6)" strokeWidth="1.5" />
+                            <polygon points="110,80 200,30 290,80" fill="rgba(99,102,241,0.4)" stroke="rgba(165,180,252,0.6)" strokeWidth="1.5"/>
                             {/* Flag pole */}
-                            <line x1="200" y1="30" x2="200" y2="5" stroke="rgba(147,197,253,0.7)" strokeWidth="2" />
-                            <rect x="200" y="5" width="20" height="12" fill="rgba(239,68,68,0.6)" rx="1" />
+                            <line x1="200" y1="30" x2="200" y2="5" stroke="rgba(147,197,253,0.7)" strokeWidth="2"/>
+                            <rect x="200" y="5" width="20" height="12" fill="rgba(239,68,68,0.6)" rx="1"/>
                             {/* Side buildings */}
-                            <rect x="30" y="130" width="80" height="90" fill="rgba(99,102,241,0.25)" stroke="rgba(165,180,252,0.4)" strokeWidth="1" rx="3" />
-                            <rect x="290" y="145" width="80" height="75" fill="rgba(99,102,241,0.25)" stroke="rgba(165,180,252,0.4)" strokeWidth="1" rx="3" />
+                            <rect x="30" y="130" width="80" height="90" fill="rgba(99,102,241,0.25)" stroke="rgba(165,180,252,0.4)" strokeWidth="1" rx="3"/>
+                            <rect x="290" y="145" width="80" height="75" fill="rgba(99,102,241,0.25)" stroke="rgba(165,180,252,0.4)" strokeWidth="1" rx="3"/>
                             {/* Trees */}
-                            <circle cx="65" cy="218" r="20" fill="rgba(34,197,94,0.4)" />
-                            <rect x="62" y="218" width="6" height="20" fill="rgba(120,53,15,0.4)" />
-                            <circle cx="335" cy="218" r="18" fill="rgba(34,197,94,0.4)" />
-                            <rect x="332" y="218" width="6" height="18" fill="rgba(120,53,15,0.4)" />
+                            <circle cx="65" cy="218" r="20" fill="rgba(34,197,94,0.4)"/>
+                            <rect x="62" y="218" width="6" height="20" fill="rgba(120,53,15,0.4)"/>
+                            <circle cx="335" cy="218" r="18" fill="rgba(34,197,94,0.4)"/>
+                            <rect x="332" y="218" width="6" height="18" fill="rgba(120,53,15,0.4)"/>
                             {/* Path */}
-                            <path d="M170 220 Q200 215 230 220 L240 280 Q200 275 160 280 Z" fill="rgba(203,213,225,0.3)" stroke="rgba(203,213,225,0.4)" strokeWidth="1" />
+                            <path d="M170 220 Q200 215 230 220 L240 280 Q200 275 160 280 Z" fill="rgba(203,213,225,0.3)" stroke="rgba(203,213,225,0.4)" strokeWidth="1"/>
                             {/* Stars/particles */}
                             {[...Array(12)].map((_, i) => (
-                                <circle key={i} cx={20 + i * 32} cy={15 + Math.sin(i) * 10} r="1.5" fill="rgba(255,255,255,0.6)" />
+                                <circle key={i} cx={20+i*32} cy={15+Math.sin(i)*10} r="1.5" fill="rgba(255,255,255,0.6)"/>
                             ))}
                         </svg>
                     </div>
 
                     <div className="text-center">
                         <h2 className="text-4xl font-black text-white mb-4 leading-tight">
-                            Smart Campus<br />
+                            Smart Campus<br/>
                             <span className="text-transparent bg-clip-text"
                                 style={{ backgroundImage: 'linear-gradient(90deg, #60a5fa, #34d399)' }}>
                                 Operation Hub

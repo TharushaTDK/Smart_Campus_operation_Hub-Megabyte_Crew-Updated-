@@ -9,9 +9,9 @@ export default function HomePage() {
         <div className="relative min-h-screen bg-gray-900 overflow-x-hidden">
             {/* Background Image & Overlay */}
             <div className="absolute inset-0 z-0">
-                <img
-                    src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=2000&auto=format&fit=crop"
-                    alt="Students collaborating"
+                <img 
+                    src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=2000&auto=format&fit=crop" 
+                    alt="Students collaborating" 
                     className="w-full h-full object-cover opacity-60"
                 />
                 <div className="absolute inset-0 bg-blue-900/40 mix-blend-multiply"></div>
@@ -23,14 +23,14 @@ export default function HomePage() {
                 <div className="max-w-2xl text-white">
                     <p className="text-sm md:text-md font-bold tracking-[0.25em] text-white/90 mb-4">{greeting}</p>
                     <h1 className="text-5xl sm:text-6xl md:text-7xl font-extrabold text-white leading-tight mb-6">
-                        WELCOME TO <br /> SMART CAMPUS
+                        WELCOME TO <br/> SMART CAMPUS
                     </h1>
-
+                    
                     <p className="text-gray-100 text-lg leading-relaxed mb-10 pl-1 border-l-4 border-blue-500 max-w-xl">
-                        This is a unified environment for students, lecturers, and staff inspired by modern Edu Meetings.
+                        This is a unified environment for students, lecturers, and staff inspired by modern Edu Meetings. 
                         Join our digital learning ecosystem to manage operations seamlessly.
                     </p>
-
+                    
                     {!user ? (
                         <Link to="/register" className="inline-block px-8 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-[30px] transition-colors shadow-lg tracking-wider text-sm mt-2">
                             JOIN US NOW!

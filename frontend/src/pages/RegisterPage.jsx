@@ -87,7 +87,7 @@ export default function RegisterPage() {
                 <div className="relative z-10 flex-1 flex flex-col justify-center">
                     <div className="mb-10">
                         <h2 className="text-4xl font-black text-white mb-4 leading-tight">
-                            Join the Smart<br />
+                            Join the Smart<br/>
                             <span className="text-transparent bg-clip-text"
                                 style={{ backgroundImage: 'linear-gradient(90deg, #a78bfa, #60a5fa)' }}>
                                 Campus Community
@@ -222,7 +222,7 @@ export default function RegisterPage() {
                             {strength && (
                                 <div className="mt-2 flex items-center gap-2">
                                     <div className="flex gap-1 flex-1">
-                                        {[1, 2, 3, 4].map(i => (
+                                        {[1,2,3,4].map(i => (
                                             <div key={i} className="h-1.5 flex-1 rounded-full transition-all duration-300"
                                                 style={{ backgroundColor: i <= strength.level ? strength.color : '#e5e7eb' }} />
                                         ))}
