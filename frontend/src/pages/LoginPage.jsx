@@ -42,7 +42,7 @@ export default function LoginPage() {
             if (response.data.role === 'ADMIN') {
                 navigate('/admin/dashboard');
             } else {
-                navigate('/dashboard');
+                navigate('/');
             }
         } catch (err) {
             setError(err.response?.data?.error || 'Login failed. Please try again.');
