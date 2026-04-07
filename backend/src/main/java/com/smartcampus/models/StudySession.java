@@ -1,5 +1,6 @@
 package com.smartcampus.models;
 
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import java.util.Date;
@@ -26,6 +27,7 @@ public class StudySession {
     private int capacity;
     private int remainingCapacity;
     private String status; // "Pending", "Approved", "Rejected"
+    private String rejectReason;
     private List<String> bookedStudentIds = new ArrayList<>();
     private List<String> bookedStudentNames = new ArrayList<>();
     private Date createdAt;
@@ -80,6 +82,9 @@ public class StudySession {
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
 
+    public String getRejectReason() { return rejectReason; }
+    public void setRejectReason(String rejectReason) { this.rejectReason = rejectReason; }
+
     public List<String> getBookedStudentIds() { return bookedStudentIds; }
     public void setBookedStudentIds(List<String> bookedStudentIds) { this.bookedStudentIds = bookedStudentIds; }
 
@@ -89,4 +94,5 @@ public class StudySession {
     public Date getCreatedAt() { return createdAt; }
     public void setCreatedAt(Date createdAt) { this.createdAt = createdAt; }
 }
+
 
