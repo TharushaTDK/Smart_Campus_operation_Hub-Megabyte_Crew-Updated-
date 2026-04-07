@@ -20,3 +20,4 @@ public class TicketMessage {
     private boolean edited = false;
     private boolean deleted = false;
 }
+
