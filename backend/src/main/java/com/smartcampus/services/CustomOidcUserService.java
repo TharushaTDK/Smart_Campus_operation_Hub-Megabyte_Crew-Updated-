@@ -45,7 +45,7 @@ public class CustomOidcUserService extends OidcUserService {
         log.info("Google OIDC login attempt for: " + email);
 
         // 3. Upsert into MongoDB
-        User user = userRepository.findByEmail(email).orElse(null);
+        User user = userRepository.findFirstByEmail(email).orElse(null);
 
         if (user == null) {
             Date now = new Date();

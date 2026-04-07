@@ -108,7 +108,7 @@ public class AuthController {
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest req,
             HttpServletRequest httpRequest) {
 
-        User user = userRepository.findByEmail(req.getEmail()).orElse(null);
+        User user = userRepository.findFirstByEmail(req.getEmail()).orElse(null);
 
         if (user == null) {
             return ResponseEntity.status(401)

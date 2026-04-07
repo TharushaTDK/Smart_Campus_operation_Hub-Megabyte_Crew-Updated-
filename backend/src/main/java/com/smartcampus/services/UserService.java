@@ -41,7 +41,7 @@ public class UserService {
         if (principal instanceof OidcUser oidcUser) {
             String email = oidcUser.getEmail();
             if (email != null)
-                return userRepository.findByEmail(email);
+                return userRepository.findFirstByEmail(email);
         }
 
         // Legacy: CustomOAuth2User (non-OIDC flow)
@@ -51,7 +51,7 @@ public class UserService {
 
         // Local email/password login — principal is the email string
         if (principal instanceof String email && !email.equals("anonymousUser")) {
-            return userRepository.findByEmail(email);
+            return userRepository.findFirstByEmail(email);
         }
 
         return Optional.empty();
@@ -67,7 +67,7 @@ public class UserService {
     }
 
     public Optional<User> getUserByEmail(String email) {
-        return userRepository.findByEmail(email);
+        return userRepository.findFirstByEmail(email);
     }
 
     public List<User> getUsersByRole(Role role) {
