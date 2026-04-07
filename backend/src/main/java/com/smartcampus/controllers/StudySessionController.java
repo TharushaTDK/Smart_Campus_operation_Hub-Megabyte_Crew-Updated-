@@ -149,7 +149,7 @@ public class StudySessionController {
     }
 
     @PutMapping("/admin/{id}/reject")
-    public ResponseEntity<?> rejectSession(@PathVariable String id) {
+    public ResponseEntity<?> rejectSession(@PathVariable String id, @RequestBody(required = false) Map<String, String> payload) {
         Optional<User> currentUser = userService.getCurrentUser();
         if (currentUser.isEmpty() || currentUser.get().getRole() != Role.ADMIN) {
             return ResponseEntity.status(403).build();
@@ -158,11 +158,19 @@ public class StudySessionController {
         return studySessionRepository.findById(id)
                 .map(session -> {
                     session.setStatus("Rejected");
+                    String reason = (payload != null && payload.containsKey("reason")) ? payload.get("reason") : "";
+                    session.setRejectReason(reason);
+                    
                     studySessionRepository.save(session);
                     // Notify Lecturer
+                    String notifyMessage = "Your session request for " + session.getSubjectName() + " has been REJECTED.";
+                    if (!reason.isEmpty()) {
+                        notifyMessage += " Reason: " + reason;
+                    }
+                    
                     notificationService.createNotification(
                         session.getLecturerId(),
-                        "Your session request for " + session.getSubjectName() + " has been REJECTED.",
+                        notifyMessage,
                         "BOOKING",
                         session.getId()
                     );
