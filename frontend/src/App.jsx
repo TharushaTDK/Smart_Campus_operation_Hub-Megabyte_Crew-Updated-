@@ -6,7 +6,7 @@ import axios from 'axios';
 import Navbar from './components/Navbar';
 
 axios.defaults.withCredentials = true;
-axios.defaults.baseURL = 'http://localhost:8081'; // Fixed port to match application.properties
+// axios.defaults.baseURL = 'http://localhost:8081'; // Removed: Use Vite proxy for JSESSIONID handling
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';

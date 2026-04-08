@@ -26,6 +26,7 @@ D:\GitHub\Smart_Campus_operation_Hub-Megabyte_Crew-Updated-\backend\src\main\jav
 D:\GitHub\Smart_Campus_operation_Hub-Megabyte_Crew-Updated-\backend\src\main\java\com\smartcampus\services\UserService.java
 D:\GitHub\Smart_Campus_operation_Hub-Megabyte_Crew-Updated-\backend\src\main\java\com\smartcampus\services\CustomOidcUserService.java
 D:\GitHub\Smart_Campus_operation_Hub-Megabyte_Crew-Updated-\backend\src\main\java\com\smartcampus\controllers\AuthController.java
+D:\GitHub\Smart_Campus_operation_Hub-Megabyte_Crew-Updated-\backend\src\main\java\com\smartcampus\models\CustomOidcUser.java
 D:\GitHub\Smart_Campus_operation_Hub-Megabyte_Crew-Updated-\backend\src\main\java\com\smartcampus\models\CustomOAuth2User.java
 D:\GitHub\Smart_Campus_operation_Hub-Megabyte_Crew-Updated-\backend\src\main\java\com\smartcampus\models\MaintenanceItem.java
 D:\GitHub\Smart_Campus_operation_Hub-Megabyte_Crew-Updated-\backend\src\main\java\com\smartcampus\services\CloudinaryService.java
