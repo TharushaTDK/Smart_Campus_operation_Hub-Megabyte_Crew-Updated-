@@ -1,5 +1,6 @@
 package com.smartcampus.services;
 
+import com.smartcampus.models.CustomOidcUser;
 import com.smartcampus.models.Role;
 import com.smartcampus.models.User;
 import com.smartcampus.repositories.UserRepository;
@@ -17,8 +18,7 @@ import java.util.logging.Logger;
  * Google is an OIDC provider → must use OidcUserService, NOT
  * DefaultOAuth2UserService.
  * This service intercepts the login, saves/updates the user in MongoDB,
- * then returns the original OidcUser so Spring Security can complete
- * authentication.
+ * then returns a CustomOidcUser so Spring Security can pick up the role.
  */
 @Service
 public class CustomOidcUserService extends OidcUserService {
@@ -45,7 +45,7 @@ public class CustomOidcUserService extends OidcUserService {
         log.info("Google OIDC login attempt for: " + email);
 
         // 3. Upsert into MongoDB
-        User user = userRepository.findByEmail(email).orElse(null);
+        User user = userRepository.findFirstByEmail(email).orElse(null);
 
         if (user == null) {
             Date now = new Date();
@@ -72,13 +72,13 @@ public class CustomOidcUserService extends OidcUserService {
         }
 
         try {
-            User saved = userRepository.save(user);
-            log.info("User saved to MongoDB: " + saved.getId() + " | " + email);
+            user = userRepository.save(user);
+            log.info("User saved to MongoDB: " + user.getId() + " | " + email);
         } catch (Exception e) {
             log.severe("MONGODB SAVE FAILED for " + email + ": " + e.getMessage());
         }
 
-        // 4. Return the OidcUser — Spring Security uses this for the session
-        return oidcUser;
+        // 4. Return CustomOidcUser so Spring Security picks up the MongoDB role
+        return new CustomOidcUser(oidcUser, user);
     }
 }

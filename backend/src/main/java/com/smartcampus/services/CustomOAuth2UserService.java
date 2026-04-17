@@ -43,7 +43,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         log.info("Google OAuth2 login attempt for: " + email);
 
         // 3. Upsert into MongoDB
-        User user = userRepository.findByEmail(email).orElse(null);
+        User user = userRepository.findFirstByEmail(email).orElse(null);
 
         if (user == null) {
             // First-time login → create with default role STUDENT
