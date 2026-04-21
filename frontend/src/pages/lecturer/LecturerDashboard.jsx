@@ -6,7 +6,8 @@ export default function LecturerDashboard() {
     const greeting = user ? `HELLO ${user.role.replace('_', ' ')}S` : 'HELLO LECTURERS';
 
     return (
-        <div className="relative min-h-screen bg-gray-900 overflow-x-hidden">
+        <div className="bg-gray-900 overflow-x-hidden">
+        <div className="relative min-h-screen">
             {/* Background Image & Overlay */}
             <div className="absolute inset-0 z-0">
                 <img
@@ -57,6 +58,81 @@ export default function LecturerDashboard() {
                             <svg className="w-10 h-10 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                         </div>
                         <h3 className="text-xl font-bold tracking-wide">Best Students</h3>
+                    </div>
+                </div>
+            </div>
+        </div>{/* end hero */}
+
+            {/* ── ADDITIONAL CONTENT ─────────────────────────────────── */}
+
+            {/* Quick Actions */}
+            <div className="relative z-10 bg-gray-900 py-24 px-6">
+                <div className="max-w-6xl mx-auto">
+                    <div className="text-center mb-16">
+                        <p className="text-xs font-black text-blue-400 uppercase tracking-[5px] mb-3">Lecturer Tools</p>
+                        <h2 className="text-4xl font-extrabold text-white uppercase tracking-tight">Quick Actions</h2>
+                        <div className="w-16 h-1 bg-blue-600 mx-auto mt-5 rounded-full"></div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                        {[
+                            {
+                                to: '/lecturer/my-sessions',
+                                bg: 'bg-blue-600 hover:bg-blue-500',
+                                icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />,
+                                label: 'My Sessions',
+                                sub: 'View & manage your booked study sessions',
+                            },
+                            {
+                                to: '/tickets',
+                                bg: 'bg-indigo-600 hover:bg-indigo-500',
+                                icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />,
+                                label: 'Support Tickets',
+                                sub: 'Raise or track a campus support request',
+                            },
+                            {
+                                to: '/profile',
+                                bg: 'bg-gray-700 hover:bg-gray-600',
+                                icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />,
+                                label: 'My Profile',
+                                sub: 'Update your personal details and settings',
+                            },
+                        ].map((a, i) => (
+                            <Link key={i} to={a.to} className={`${a.bg} rounded-2xl p-8 text-white transition-all hover:-translate-y-1 shadow-lg group`}>
+                                <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center mb-5">
+                                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">{a.icon}</svg>
+                                </div>
+                                <h3 className="font-black uppercase tracking-widest text-sm mb-2">{a.label}</h3>
+                                <p className="text-white/70 text-xs leading-relaxed">{a.sub}</p>
+                                <span className="mt-5 inline-block text-xs font-black uppercase tracking-widest text-white/50 group-hover:text-white transition-colors">Go →</span>
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* Tips for Lecturers */}
+            <div className="relative z-10 bg-gray-800/40 py-24 px-6 border-t border-white/5">
+                <div className="max-w-6xl mx-auto">
+                    <div className="text-center mb-16">
+                        <p className="text-xs font-black text-blue-400 uppercase tracking-[5px] mb-3">Good to Know</p>
+                        <h2 className="text-4xl font-extrabold text-white uppercase tracking-tight">Lecturer Guidelines</h2>
+                        <div className="w-16 h-1 bg-blue-600 mx-auto mt-5 rounded-full"></div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {[
+                            { num: '01', title: 'Booking Windows', body: 'Sessions can be booked on weekdays between 8 AM – 5 PM and weekends between 8 AM – 8 PM. All slots are in 30-minute intervals.' },
+                            { num: '02', title: 'Approval Process', body: 'Every session request is reviewed by the admin. You will receive a real-time notification once your request is approved or rejected.' },
+                            { num: '03', title: 'Session Capacity', body: 'Capacity is determined by the facility selected. Students can self-register once your session is approved.' },
+                            { num: '04', title: 'Raising Tickets', body: 'For any campus issue — equipment, room conditions, or IT — raise a support ticket and track its progress from the Tickets page.' },
+                        ].map((t, i) => (
+                            <div key={i} className="flex gap-5 bg-gray-800/60 border border-white/5 rounded-2xl p-7 hover:border-blue-500/30 transition-all">
+                                <span className="text-4xl font-black text-blue-600/30 leading-none flex-shrink-0">{t.num}</span>
+                                <div>
+                                    <h3 className="text-white font-bold uppercase tracking-wider text-sm mb-2">{t.title}</h3>
+                                    <p className="text-gray-400 text-sm leading-relaxed">{t.body}</p>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>
