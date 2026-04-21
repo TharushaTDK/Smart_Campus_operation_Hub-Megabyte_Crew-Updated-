@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../App';
 import axios from 'axios';
+import NotificationBell from './NotificationBell';
 
 const Sidebar = () => {
   const { user, setUser } = useAuth();
@@ -30,11 +31,14 @@ const Sidebar = () => {
     <div className="fixed top-0 left-0 w-64 h-screen bg-[#0d1526] text-slate-300 flex flex-col justify-between z-40 border-r border-white/5 shadow-2xl">
       <div>
         <div className="p-8 mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
-              <span className="text-xl font-black text-white italic">S</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                <span className="text-xl font-black text-white italic">S</span>
+              </div>
+              <h1 className="text-xl font-black text-white tracking-tight uppercase">Smart<span className="text-indigo-400">Hub</span></h1>
             </div>
-            <h1 className="text-xl font-black text-white tracking-tight uppercase">Smart<span className="text-indigo-400">Hub</span></h1>
+            <NotificationBell dropdownAlign="left" />
           </div>
         </div>
 

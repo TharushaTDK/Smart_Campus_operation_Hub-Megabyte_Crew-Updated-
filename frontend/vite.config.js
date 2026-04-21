@@ -21,6 +21,20 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
+      // SSE stream — must be listed before the generic /api rule so Vite
+      // matches it first and does not buffer the chunked response
+      '/api/notifications/stream': {
+        target: 'http://localhost:8081',
+        changeOrigin: true,
+        secure: false,
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.setHeader('Accept', 'text/event-stream');
+            proxyReq.setHeader('Cache-Control', 'no-cache');
+            proxyReq.setHeader('Connection', 'keep-alive');
+          });
+        },
+      },
       // REST API calls
       '/api': {
         target: 'http://localhost:8081',

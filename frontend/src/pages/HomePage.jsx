@@ -6,7 +6,8 @@ export default function HomePage() {
     const greeting = user ? `HELLO ${user.role.replace('_', ' ')}S` : 'HELLO STUDENTS';
 
     return (
-        <div className="relative min-h-screen bg-gray-900 overflow-x-hidden">
+        <div className="bg-gray-900 overflow-x-hidden">
+        <div className="relative min-h-screen">
             {/* Background Image & Overlay */}
             <div className="absolute inset-0 z-0">
                 <img 
@@ -80,6 +81,110 @@ export default function HomePage() {
                     </div>
                 </div>
             </div>
+        </div>{/* end hero */}
+
+            {/* ── ADDITIONAL CONTENT ─────────────────────────────────── */}
+
+            {/* Platform Features */}
+            <div className="relative z-10 bg-gray-900 py-24 px-6">
+                <div className="max-w-6xl mx-auto">
+                    <div className="text-center mb-16">
+                        <p className="text-xs font-black text-blue-400 uppercase tracking-[5px] mb-3">What We Offer</p>
+                        <h2 className="text-4xl font-extrabold text-white uppercase tracking-tight">Platform Features</h2>
+                        <div className="w-16 h-1 bg-blue-600 mx-auto mt-5 rounded-full"></div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {[
+                            {
+                                icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />,
+                                title: 'Session Booking',
+                                desc: 'Lecturers can book study hall slots and students can register for approved sessions in real time.'
+                            },
+                            {
+                                icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />,
+                                title: 'Support Tickets',
+                                desc: 'Raise and track support tickets for any campus issue. Admins and technicians respond directly.'
+                            },
+                            {
+                                icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />,
+                                title: 'Facility Management',
+                                desc: 'Campus facilities and assets are tracked in real time, with maintenance status always visible.'
+                            },
+                            {
+                                icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />,
+                                title: 'Live Notifications',
+                                desc: 'Get instant notifications for session approvals, ticket updates, and campus activity alerts.'
+                            },
+                            {
+                                icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />,
+                                title: 'Maintenance Tracking',
+                                desc: 'Maintenance staff receive assigned tasks and update statuses, keeping the campus running smoothly.'
+                            },
+                            {
+                                icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />,
+                                title: 'Role-Based Access',
+                                desc: 'Students, lecturers, maintenance staff, and admins each get a tailored view and set of controls.'
+                            },
+                        ].map((f, i) => (
+                            <div key={i} className="bg-gray-800/60 border border-white/5 rounded-2xl p-8 hover:border-blue-500/40 hover:-translate-y-1 transition-all duration-300">
+                                <div className="w-12 h-12 bg-blue-600/20 rounded-xl flex items-center justify-center mb-5">
+                                    <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">{f.icon}</svg>
+                                </div>
+                                <h3 className="text-white font-bold uppercase tracking-wider text-sm mb-3">{f.title}</h3>
+                                <p className="text-gray-400 text-sm leading-relaxed">{f.desc}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* How It Works */}
+            <div className="relative z-10 bg-gray-800/40 py-24 px-6 border-t border-white/5">
+                <div className="max-w-6xl mx-auto">
+                    <div className="text-center mb-16">
+                        <p className="text-xs font-black text-blue-400 uppercase tracking-[5px] mb-3">Simple Steps</p>
+                        <h2 className="text-4xl font-extrabold text-white uppercase tracking-tight">How It Works</h2>
+                        <div className="w-16 h-1 bg-blue-600 mx-auto mt-5 rounded-full"></div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+                        {/* Connector line (desktop) */}
+                        <div className="hidden md:block absolute top-10 left-1/3 right-1/3 h-px bg-blue-500/30"></div>
+                        {[
+                            { step: '01', title: 'Create Your Account', desc: 'Register with your campus email and get instant access to all platform features for your role.' },
+                            { step: '02', title: 'Explore Your Dashboard', desc: 'Navigate sessions, tickets, maintenance tasks, or admin controls — everything in one place.' },
+                            { step: '03', title: 'Stay Connected', desc: 'Receive real-time notifications and manage your campus activities from anywhere.' },
+                        ].map((s, i) => (
+                            <div key={i} className="text-center relative">
+                                <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-600/30">
+                                    <span className="text-white font-black text-lg tracking-wider">{s.step}</span>
+                                </div>
+                                <h3 className="text-white font-bold uppercase tracking-wider text-sm mb-3">{s.title}</h3>
+                                <p className="text-gray-400 text-sm leading-relaxed max-w-xs mx-auto">{s.desc}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* CTA Banner */}
+            {!user && (
+                <div className="relative z-10 bg-blue-600 py-20 px-6 border-t border-blue-500/50">
+                    <div className="max-w-3xl mx-auto text-center">
+                        <h2 className="text-4xl font-extrabold text-white uppercase tracking-tight mb-4">Ready to Join?</h2>
+                        <p className="text-blue-100 text-lg mb-10 leading-relaxed">
+                            Join the SmartCampus platform and experience a smarter way to manage your campus life.
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                            <Link to="/register" className="px-10 py-4 bg-white text-blue-700 font-black uppercase tracking-widest rounded-full hover:bg-blue-50 transition-colors shadow-xl text-sm">
+                                Register Now
+                            </Link>
+                            <Link to="/login" className="px-10 py-4 bg-transparent border-2 border-white text-white font-black uppercase tracking-widest rounded-full hover:bg-white/10 transition-colors text-sm">
+                                Sign In
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
