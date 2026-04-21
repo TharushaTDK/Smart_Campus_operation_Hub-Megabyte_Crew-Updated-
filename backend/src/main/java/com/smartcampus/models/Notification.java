@@ -1,5 +1,6 @@
 package com.smartcampus.models;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDateTime;
@@ -67,6 +68,7 @@ public class Notification {
         this.referenceId = referenceId;
     }
 
+    @JsonProperty("isRead")
     public boolean isRead() {
         return isRead;
     }

@@ -6,6 +6,7 @@ import com.smartcampus.dto.UpdateUserRequest;
 import com.smartcampus.models.Role;
 import com.smartcampus.models.User;
 import com.smartcampus.repositories.UserRepository;
+import com.smartcampus.services.NotificationService;
 import com.smartcampus.services.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -16,9 +17,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Date;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * Admin-only REST API for managing all users.
@@ -32,12 +30,14 @@ public class UserManagementController {
     private final UserService userService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final NotificationService notificationService;
 
     public UserManagementController(UserService userService, UserRepository userRepository,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder, NotificationService notificationService) {
         this.userService = userService;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.notificationService = notificationService;
     }
 
     /** POST /api/admin/users — add a new user */
@@ -63,7 +63,15 @@ public class UserManagementController {
                 .lastLogin(now)
                 .build();
 
-        return ResponseEntity.status(201).body(userRepository.save(user).withoutPassword());
+        User saved = userRepository.save(user);
+
+        // Notify all admins about the new user
+        String notifyMsg = "New user added: " + saved.getName() + " (" + saved.getRole() + ")";
+        userService.getUsersByRole(Role.ADMIN).forEach(admin ->
+            notificationService.createNotification(admin.getId(), notifyMsg, "USER", saved.getId())
+        );
+
+        return ResponseEntity.status(201).body(saved.withoutPassword());
     }
 
     /** PUT /api/admin/users/{id} — full user edit (all fields) */
