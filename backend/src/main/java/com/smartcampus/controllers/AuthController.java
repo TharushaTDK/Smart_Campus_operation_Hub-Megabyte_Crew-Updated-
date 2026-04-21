@@ -5,6 +5,8 @@ import com.smartcampus.dto.RegisterRequest;
 import com.smartcampus.models.Role;
 import com.smartcampus.models.User;
 import com.smartcampus.repositories.UserRepository;
+import com.smartcampus.services.EmailService;
+import com.smartcampus.services.NotificationService;
 import com.smartcampus.services.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -31,13 +33,19 @@ public class AuthController {
     private final UserService userService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final NotificationService notificationService;
+    private final EmailService emailService;
 
     public AuthController(UserService userService,
             UserRepository userRepository,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            NotificationService notificationService,
+            EmailService emailService) {
         this.userService = userService;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.notificationService = notificationService;
+        this.emailService = emailService;
     }
 
     // ── GET /api/auth/debug (public) — shows session/cookie info ───────
@@ -100,6 +108,20 @@ public class AuthController {
                 .build();
 
         User saved = userRepository.save(user);
+
+        // Notify all admins about the new self-registration
+        userService.getUsersByRole(Role.ADMIN).forEach(admin ->
+            notificationService.createNotification(
+                admin.getId(),
+                "New user registered: " + saved.getName() + " (" + saved.getEmail() + ")",
+                "USER",
+                saved.getId()
+            )
+        );
+
+        // Send welcome email to the newly registered user (async — does not block response)
+        emailService.sendWelcomeEmail(saved.getEmail(), saved.getName());
+
         return ResponseEntity.status(201).body(saved.withoutPassword());
     }
 

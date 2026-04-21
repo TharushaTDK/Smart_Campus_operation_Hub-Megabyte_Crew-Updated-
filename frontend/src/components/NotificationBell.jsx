@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Bell, Check, Clock, MessageSquare, Calendar } from 'lucide-react';
+import { Bell, Check, Clock, MessageSquare, Calendar, UserPlus } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../App';
 
-export default function NotificationBell() {
+export default function NotificationBell({ dropdownAlign = 'right' }) {
+    const { user } = useAuth();
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [isOpen, setIsOpen] = useState(false);
@@ -25,28 +27,38 @@ export default function NotificationBell() {
     useEffect(() => {
         fetchNotifications();
 
-        // SSE for real-time updates
-        const eventSource = new EventSource('/api/notifications/stream', { withCredentials: true });
+        let eventSource;
+        let retryTimeout;
 
-        eventSource.onmessage = (event) => {
-            const newNotification = JSON.parse(event.data);
-            setNotifications(prev => [newNotification, ...prev]);
-            setUnreadCount(prev => prev + 1);
+        const connect = () => {
+            eventSource = new EventSource('/api/notifications/stream', { withCredentials: true });
+
+            eventSource.addEventListener('notification', (event) => {
+                try {
+                    const newNotification = JSON.parse(event.data);
+                    setNotifications(prev => [newNotification, ...prev]);
+                    setUnreadCount(prev => prev + 1);
+                } catch (e) {
+                    console.error('Failed to parse SSE notification', e);
+                }
+            });
+
+            eventSource.onerror = () => {
+                eventSource.close();
+                // Auto-reconnect after 5 seconds
+                retryTimeout = setTimeout(connect, 5000);
+            };
         };
 
-        eventSource.addEventListener('notification', (event) => {
-            const newNotification = JSON.parse(event.data);
-            setNotifications(prev => [newNotification, ...prev]);
-            setUnreadCount(prev => prev + 1);
-        });
+        connect();
 
-        eventSource.onerror = (err) => {
-            console.error("SSE Error:", err);
-            eventSource.close();
-        };
+        // Polling fallback — re-sync every 30 seconds in case SSE missed an event
+        const poll = setInterval(fetchNotifications, 30000);
 
         return () => {
             eventSource.close();
+            clearTimeout(retryTimeout);
+            clearInterval(poll);
         };
     }, []);
 
@@ -79,11 +91,13 @@ export default function NotificationBell() {
     const handleNotificationClick = (note) => {
         markAsRead(note.id, note.isRead);
         setIsOpen(false);
-        
+
         if (note.type === 'BOOKING') {
-            navigate('/lecturer/my-sessions'); // Assuming lecturer is notified about booking
+            navigate(user?.role === 'TEACHER' ? '/lecturer/my-sessions' : '/sessions');
         } else if (note.type === 'TICKET') {
-            navigate('/tickets');
+            navigate(user?.role === 'ADMIN' ? '/admin/tickets' : '/tickets');
+        } else if (note.type === 'USER') {
+            navigate('/admin/users');
         }
     };
 
@@ -100,6 +114,7 @@ export default function NotificationBell() {
         switch (type) {
             case 'BOOKING': return <Calendar className="w-4 h-4 text-blue-400" />;
             case 'TICKET': return <MessageSquare className="w-4 h-4 text-purple-400" />;
+            case 'USER': return <UserPlus className="w-4 h-4 text-emerald-400" />;
             default: return <Bell className="w-4 h-4 text-gray-400" />;
         }
     };
@@ -119,7 +134,7 @@ export default function NotificationBell() {
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 mt-3 w-80 sm:w-96 bg-[#0f172a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-5 duration-200">
+                <div className={`absolute ${dropdownAlign === 'left' ? 'left-0' : 'right-0'} mt-3 w-80 sm:w-96 bg-[#0f172a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-5 duration-200`}>
                     <div className="p-4 bg-white/5 border-b border-white/10 flex items-center justify-between">
                         <h3 className="font-bold text-white flex items-center gap-2">
                             Notifications

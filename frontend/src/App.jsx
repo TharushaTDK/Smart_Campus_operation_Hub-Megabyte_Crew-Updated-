@@ -4,6 +4,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { useState, useEffect, createContext, useContext } from 'react';
 import axios from 'axios';
 import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 
 axios.defaults.withCredentials = true;
 // axios.defaults.baseURL = 'http://localhost:8081'; // Removed: Use Vite proxy for JSESSIONID handling
@@ -24,6 +25,7 @@ import AdminStudySessions from './pages/admin/AdminStudySessions';
 import AdminTickets from './pages/admin/AdminTickets';
 import StudentSessions from './pages/StudentSessions';
 import Tickets from './pages/Tickets';
+import AboutPage from './pages/AboutPage';
 
 // ── Auth Context ─────────────────────────────────────────────────────────────
 export const AuthContext = createContext(null);
@@ -90,6 +92,7 @@ function AppContent() {
                 <Route path="/" element={<HomePage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
+                <Route path="/about" element={<AboutPage />} />
                 <Route path="/sessions" element={<ProtectedRoute><StudentSessions /></ProtectedRoute>} />
                 <Route path="/dashboard" element={<ProtectedRoute><DashboardRedirect /></ProtectedRoute>} />
 
@@ -112,6 +115,7 @@ function AppContent() {
                 <Route path="/profile" element={<ProtectedRoute><UserDetails /></ProtectedRoute>} />
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
+            {!isAdminRoute && <Footer />}
         </>
     );
 }

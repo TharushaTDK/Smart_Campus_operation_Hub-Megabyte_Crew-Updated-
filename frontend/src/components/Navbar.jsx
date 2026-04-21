@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../App';
 import axios from 'axios';
+import NotificationBell from './NotificationBell';
 
 export default function Navbar() {
     const { pathname } = useLocation();
@@ -55,6 +56,9 @@ export default function Navbar() {
                                 </div>
 
                                 <div className="h-6 w-px bg-gray-500/50 hidden md:block"></div>
+
+                                {/* Notification Bell */}
+                                <NotificationBell />
 
                                 {/* User Context Info */}
                                 <Link to="/profile"
