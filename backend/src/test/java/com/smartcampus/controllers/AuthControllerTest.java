@@ -6,6 +6,8 @@ import com.smartcampus.dto.RegisterRequest;
 import com.smartcampus.models.Role;
 import com.smartcampus.models.User;
 import com.smartcampus.repositories.UserRepository;
+import com.smartcampus.services.EmailService;
+import com.smartcampus.services.NotificationService;
 import com.smartcampus.services.UserService;
 
 import org.junit.jupiter.api.Test;
@@ -42,6 +44,12 @@ class AuthControllerTest {
 
         @MockBean
         private PasswordEncoder passwordEncoder;
+
+        @MockBean
+        private NotificationService notificationService;
+
+        @MockBean
+        private EmailService emailService;
 
         @Autowired
         private ObjectMapper objectMapper;

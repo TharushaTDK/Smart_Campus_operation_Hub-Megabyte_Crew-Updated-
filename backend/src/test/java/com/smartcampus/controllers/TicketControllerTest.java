@@ -4,6 +4,7 @@ import com.smartcampus.models.User;
 import com.smartcampus.models.Role;
 import com.smartcampus.repositories.TicketRepository;
 import com.smartcampus.services.CloudinaryService;
+import com.smartcampus.services.EmailService;
 import com.smartcampus.services.NotificationService;
 import com.smartcampus.services.UserService;
 import org.junit.jupiter.api.Test;
@@ -38,6 +39,9 @@ class TicketControllerTest {
 
     @MockBean
     private CloudinaryService cloudinaryService;
+
+    @MockBean
+    private EmailService emailService;
 
     @Test
     void testGetMyTickets() throws Exception {
