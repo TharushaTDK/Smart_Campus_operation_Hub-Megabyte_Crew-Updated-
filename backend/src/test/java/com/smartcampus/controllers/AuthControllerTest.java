@@ -111,7 +111,7 @@ class AuthControllerTest {
                 request.setEmail("wrong@test.com");
                 request.setPassword("123456");
 
-                Mockito.when(userRepository.findByEmail("wrong@test.com"))
+                Mockito.when(userRepository.findFirstByEmail("wrong@test.com"))
                                 .thenReturn(Optional.empty());
 
                 mockMvc.perform(post("/api/auth/login").with(csrf())
@@ -139,7 +139,7 @@ class AuthControllerTest {
                                 .build();
                 user.setId("1");
 
-                Mockito.when(userRepository.findByEmail("john@test.com"))
+                Mockito.when(userRepository.findFirstByEmail("john@test.com"))
                                 .thenReturn(Optional.of(user));
 
                 Mockito.when(passwordEncoder.matches("wrongpass", "encodedPassword"))
@@ -170,7 +170,7 @@ class AuthControllerTest {
                                 .build();
                 user.setId("1");
 
-                Mockito.when(userRepository.findByEmail("john@test.com"))
+                Mockito.when(userRepository.findFirstByEmail("john@test.com"))
                                 .thenReturn(Optional.of(user));
 
                 Mockito.when(passwordEncoder.matches("123456", "encodedPassword"))

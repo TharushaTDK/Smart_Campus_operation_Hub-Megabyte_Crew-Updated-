@@ -66,6 +66,24 @@ public class EmailService {
         sendHtml(toEmail, subject, body);
     }
 
+    /**
+     * Sends a welcome email to a newly registered user.
+     */
+    public void sendWelcomeEmail(String toEmail, String toName) {
+        String subject = "Welcome to Smart Campus Operation Hub!";
+        String body = buildHtml(
+            toName,
+            "Your account has been successfully created.",
+            "Welcome to Smart Campus",
+            "",
+            "<p style='color:#94a3b8;font-size:14px;line-height:1.7;margin:0'>You can now log in and access all campus facilities, book study rooms, submit maintenance tickets, and more. We're excited to have you on board!</p>",
+            "#10b981",
+            "GO TO DASHBOARD",
+            "If you did not create this account, please contact us immediately."
+        );
+        sendHtml(toEmail, subject, body);
+    }
+
     /* ── private helpers ──────────────────────────────────────────── */
 
     private void sendHtml(String to, String subject, String html) {
