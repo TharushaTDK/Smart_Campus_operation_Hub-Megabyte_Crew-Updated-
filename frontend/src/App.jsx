@@ -21,6 +21,8 @@ import AdminMaintenanceManagement from './pages/admin/AdminMaintenanceManagement
 import UserDetails from './pages/UserDetails';
 import StaffMaintenance from './pages/staff/StaffMaintenance';
 import MySessions from './pages/lecturer/MySessions';
+import LecturerAttendanceScanner from './pages/lecturer/LecturerAttendanceScanner';
+import StudentQRCode from './pages/StudentQRCode';
 import AdminStudySessions from './pages/admin/AdminStudySessions';
 import AdminTickets from './pages/admin/AdminTickets';
 import StudentSessions from './pages/StudentSessions';
@@ -99,6 +101,8 @@ function AppContent() {
                 {/* Role-Specific Dashboards */}
                 <Route path="/lecturer/dashboard" element={<ProtectedRoute><LecturerDashboard /></ProtectedRoute>} />
                 <Route path="/lecturer/my-sessions" element={<ProtectedRoute><MySessions /></ProtectedRoute>} />
+                <Route path="/lecturer/attendance/:sessionId" element={<ProtectedRoute><LecturerAttendanceScanner /></ProtectedRoute>} />
+                <Route path="/student/qr/:sessionId" element={<ProtectedRoute><StudentQRCode /></ProtectedRoute>} />
                 <Route path="/staff/dashboard" element={<ProtectedRoute><StaffDashboard /></ProtectedRoute>} />
                 <Route path="/maintenance" element={<ProtectedRoute><StaffMaintenance /></ProtectedRoute>} />
 
