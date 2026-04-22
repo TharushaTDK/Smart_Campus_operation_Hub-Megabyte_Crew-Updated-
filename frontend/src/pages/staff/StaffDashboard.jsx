@@ -6,7 +6,8 @@ export default function StaffDashboard() {
     const greeting = user ? `HELLO STAFF` : 'HELLO MAINTENANCE';
 
     return (
-        <div className="relative min-h-screen bg-gray-900 overflow-x-hidden">
+        <div className="bg-gray-900 overflow-x-hidden">
+        <div className="relative min-h-screen">
             {/* Background Image & Overlay */}
             <div className="absolute inset-0 z-0">
                 <img
@@ -60,6 +61,81 @@ export default function StaffDashboard() {
                             <svg className="w-10 h-10 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                         </div>
                         <h3 className="text-xl font-bold tracking-wide">Best Students</h3>
+                    </div>
+                </div>
+            </div>
+        </div>{/* end hero */}
+
+            {/* ── ADDITIONAL CONTENT ─────────────────────────────────── */}
+
+            {/* Quick Actions */}
+            <div className="relative z-10 bg-gray-900 py-24 px-6">
+                <div className="max-w-6xl mx-auto">
+                    <div className="text-center mb-16">
+                        <p className="text-xs font-black text-blue-400 uppercase tracking-[5px] mb-3">Staff Tools</p>
+                        <h2 className="text-4xl font-extrabold text-white uppercase tracking-tight">Quick Actions</h2>
+                        <div className="w-16 h-1 bg-blue-600 mx-auto mt-5 rounded-full"></div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                        {[
+                            {
+                                to: '/maintenance',
+                                bg: 'bg-blue-600 hover:bg-blue-500',
+                                icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />,
+                                label: 'Maintenance Tasks',
+                                sub: 'View and update your assigned maintenance jobs',
+                            },
+                            {
+                                to: '/tickets',
+                                bg: 'bg-indigo-600 hover:bg-indigo-500',
+                                icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />,
+                                label: 'Support Tickets',
+                                sub: 'View tickets assigned to you or raise a new one',
+                            },
+                            {
+                                to: '/profile',
+                                bg: 'bg-gray-700 hover:bg-gray-600',
+                                icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />,
+                                label: 'My Profile',
+                                sub: 'Update your personal details and department info',
+                            },
+                        ].map((a, i) => (
+                            <Link key={i} to={a.to} className={`${a.bg} rounded-2xl p-8 text-white transition-all hover:-translate-y-1 shadow-lg group`}>
+                                <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center mb-5">
+                                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">{a.icon}</svg>
+                                </div>
+                                <h3 className="font-black uppercase tracking-widest text-sm mb-2">{a.label}</h3>
+                                <p className="text-white/70 text-xs leading-relaxed">{a.sub}</p>
+                                <span className="mt-5 inline-block text-xs font-black uppercase tracking-widest text-white/50 group-hover:text-white transition-colors">Go →</span>
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* Staff Guidelines */}
+            <div className="relative z-10 bg-gray-800/40 py-24 px-6 border-t border-white/5">
+                <div className="max-w-6xl mx-auto">
+                    <div className="text-center mb-16">
+                        <p className="text-xs font-black text-blue-400 uppercase tracking-[5px] mb-3">Good to Know</p>
+                        <h2 className="text-4xl font-extrabold text-white uppercase tracking-tight">Staff Guidelines</h2>
+                        <div className="w-16 h-1 bg-blue-600 mx-auto mt-5 rounded-full"></div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {[
+                            { num: '01', title: 'Assigned Tasks', body: 'Maintenance tasks are assigned to you by the admin based on your department. Check the Maintenance page regularly for new jobs.' },
+                            { num: '02', title: 'Status Updates', body: 'Always update the status of your tasks as you progress — Pending, In Progress, or Completed. This keeps the admin informed in real time.' },
+                            { num: '03', title: 'Ticket Responses', body: 'When a ticket is assigned to you, respond and update its status via the Tickets page. The ticket sender is notified of every update.' },
+                            { num: '04', title: 'Completion & Facility Reset', body: 'Marking a maintenance task as Completed automatically resets the facility status, making it available for bookings again.' },
+                        ].map((t, i) => (
+                            <div key={i} className="flex gap-5 bg-gray-800/60 border border-white/5 rounded-2xl p-7 hover:border-blue-500/30 transition-all">
+                                <span className="text-4xl font-black text-blue-600/30 leading-none flex-shrink-0">{t.num}</span>
+                                <div>
+                                    <h3 className="text-white font-bold uppercase tracking-wider text-sm mb-2">{t.title}</h3>
+                                    <p className="text-gray-400 text-sm leading-relaxed">{t.body}</p>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>
