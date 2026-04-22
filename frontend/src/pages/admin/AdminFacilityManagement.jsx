@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Sidebar from '../../components/Sidebar';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export default function AdminFacilityManagement() {
     const [facilities, setFacilities] = useState([]);
@@ -9,6 +11,8 @@ export default function AdminFacilityManagement() {
     const [editingId, setEditingId] = useState(null);
     const [activeFilter, setActiveFilter] = useState('All');
     const [searchTerm, setSearchTerm] = useState('');
+
+    const [formErrors, setFormErrors] = useState({});
 
     const [formData, setFormData] = useState({
         name: '',
@@ -89,8 +93,65 @@ export default function AdminFacilityManagement() {
         }));
     };
 
+    const validate = () => {
+        const errors = {};
+
+        if (!formData.name.trim()) {
+            errors.name = 'Resource name is required';
+        } else if (formData.name.trim().length < 3) {
+            errors.name = 'Name must be at least 3 characters';
+        } else if (formData.name.trim().length > 100) {
+            errors.name = 'Name cannot exceed 100 characters';
+        }
+
+        if (!formData.location.trim()) {
+            errors.location = 'Zone / Location is required';
+        } else if (formData.location.trim().length < 3) {
+            errors.location = 'Location must be at least 3 characters';
+        } else if (formData.location.trim().length > 100) {
+            errors.location = 'Location cannot exceed 100 characters';
+        }
+
+        if (formData.category === 'Study Area') {
+            const cap = parseInt(formData.capacity, 10);
+            if (!formData.capacity && formData.capacity !== 0) {
+                errors.capacity = 'Capacity is required for Study Areas';
+            } else if (isNaN(cap) || cap < 1) {
+                errors.capacity = 'Capacity must be at least 1';
+            } else if (cap > 9999) {
+                errors.capacity = 'Capacity cannot exceed 9999';
+            }
+        }
+
+        if (formData.type === 'Air Conditioner') {
+            if (!formData.attributes.brand?.trim()) {
+                errors.brand = 'Brand is required';
+            }
+            const btu = parseFloat(formData.attributes.coolingCapacity);
+            if (!formData.attributes.coolingCapacity?.trim()) {
+                errors.coolingCapacity = 'Cooling capacity is required';
+            } else if (isNaN(btu) || btu <= 0) {
+                errors.coolingCapacity = 'Enter a valid positive value (e.g. 12000)';
+            }
+        }
+
+        if (formData.type === 'Projector') {
+            if (!formData.attributes.connectivity?.trim()) {
+                errors.connectivity = 'Interface / connectivity is required';
+            }
+        }
+
+        return errors;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        const errors = validate();
+        if (Object.keys(errors).length > 0) {
+            setFormErrors(errors);
+            return;
+        }
+        setFormErrors({});
         try {
             const payload = {
                 ...formData,
@@ -135,6 +196,7 @@ export default function AdminFacilityManagement() {
             maintenanceStatus: 'No Maintenance',
             attributes: { hasProjector: false, hasMic: false }
         });
+        setFormErrors({});
     };
 
     const handleDelete = async (id) => {
@@ -160,6 +222,195 @@ export default function AdminFacilityManagement() {
         { label: 'Other Assets', value: 'Other Asset' }
     ];
 
+    const generatePDF = () => {
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        const pageW = doc.internal.pageSize.getWidth();
+        const pageH = doc.internal.pageSize.getHeight();
+        const margin = 18;
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+        const addFooter = () => {
+            const total = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= total; i++) {
+                doc.setPage(i);
+                doc.setFillColor(15, 23, 42);
+                doc.rect(0, pageH - 12, pageW, 12, 'F');
+                doc.setFontSize(7.5);
+                doc.setTextColor(100, 116, 139);
+                doc.text('Smart Campus Operation Hub  ·  Facilities & Assets Report  ·  Confidential', margin, pageH - 4.5);
+                doc.text(`Page ${i} of ${total}`, pageW - margin, pageH - 4.5, { align: 'right' });
+            }
+        };
+
+        // ── Cover header band ─────────────────────────────────────────
+        doc.setFillColor(10, 14, 27);
+        doc.rect(0, 0, pageW, pageH, 'F');
+
+        doc.setFillColor(67, 56, 202);
+        doc.rect(0, 0, pageW, 38, 'F');
+
+        doc.setFontSize(9);
+        doc.setTextColor(199, 210, 254);
+        doc.setFont('helvetica', 'bold');
+        doc.text('SMART CAMPUS OPERATION HUB', margin, 13);
+
+        doc.setFontSize(20);
+        doc.setTextColor(255, 255, 255);
+        doc.text('Facilities & Assets Report', margin, 25);
+
+        doc.setFontSize(8);
+        doc.setTextColor(199, 210, 254);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Generated: ${dateStr}  at  ${timeStr}`, margin, 33);
+
+        // ── Summary stats strip ───────────────────────────────────────
+        const studyCount     = facilities.filter(f => f.category === 'Study Area').length;
+        const equipCount     = facilities.filter(f => f.category === 'Equipment').length;
+        const otherCount     = facilities.filter(f => f.category === 'Other Asset').length;
+
+        const stats = [
+            { label: 'Total Assets',   value: facilities.length },
+            { label: 'Study Areas',    value: studyCount },
+            { label: 'Equipment',      value: equipCount },
+            { label: 'Other Assets',   value: otherCount },
+            { label: 'Under Maintenance', value: facilities.filter(f => f.maintenanceStatus === 'Under Maintenance').length },
+        ];
+
+        const boxW = (pageW - margin * 2) / stats.length;
+        let bx = margin;
+        doc.setFillColor(21, 30, 48);
+        doc.roundedRect(margin - 3, 43, pageW - margin * 2 + 6, 22, 3, 3, 'F');
+
+        stats.forEach(s => {
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(165, 180, 252);
+            doc.text(String(s.value), bx + boxW / 2, 53, { align: 'center' });
+            doc.setFontSize(6.5);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(100, 116, 139);
+            doc.text(s.label.toUpperCase(), bx + boxW / 2, 59, { align: 'center' });
+            bx += boxW;
+        });
+
+        // ── Helper: format attributes as readable string ──────────────
+        const fmtAttrs = (attrs) => {
+            if (!attrs || Object.keys(attrs).length === 0) return '—';
+            return Object.entries(attrs)
+                .map(([k, v]) => {
+                    const label = k.replace(/([A-Z])/g, ' $1').trim();
+                    const val = typeof v === 'boolean' ? (v ? 'Yes' : 'No') : (v || '—');
+                    return `${label}: ${val}`;
+                })
+                .join('  |  ');
+        };
+
+        // ── Section renderer ──────────────────────────────────────────
+        const sectionConfigs = [
+            {
+                title: 'Study Areas',
+                color: [20, 184, 166],
+                items: facilities.filter(f => f.category === 'Study Area'),
+                columns: ['Name', 'Type', 'Location', 'Capacity', 'Status', 'Attributes'],
+                rows: (f) => [
+                    f.name,
+                    f.type,
+                    f.location,
+                    f.capacity ? String(f.capacity) : '—',
+                    f.maintenanceStatus === 'Under Maintenance' ? 'Under Maintenance' : 'Operational',
+                    fmtAttrs(f.attributes),
+                ],
+            },
+            {
+                title: 'Equipment',
+                color: [249, 115, 22],
+                items: facilities.filter(f => f.category === 'Equipment'),
+                columns: ['Name', 'Type', 'Location', 'Status', 'Attributes'],
+                rows: (f) => [
+                    f.name,
+                    f.type,
+                    f.location,
+                    f.maintenanceStatus === 'Under Maintenance' ? 'Under Maintenance' : 'Operational',
+                    fmtAttrs(f.attributes),
+                ],
+            },
+            {
+                title: 'Other Assets',
+                color: [217, 70, 239],
+                items: facilities.filter(f => f.category === 'Other Asset'),
+                columns: ['Name', 'Type', 'Location', 'Status', 'Attributes'],
+                rows: (f) => [
+                    f.name,
+                    f.type,
+                    f.location,
+                    f.maintenanceStatus === 'Under Maintenance' ? 'Under Maintenance' : 'Operational',
+                    fmtAttrs(f.attributes),
+                ],
+            },
+        ];
+
+        let cursorY = 73;
+
+        sectionConfigs.forEach(section => {
+            if (section.items.length === 0) return;
+
+            if (cursorY > pageH - 50) { doc.addPage(); cursorY = 18; }
+
+            // Section title bar
+            const [r, g, b] = section.color;
+            doc.setFillColor(r, g, b);
+            doc.rect(margin - 3, cursorY, 5, 7, 'F');
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(r, g, b);
+            doc.text(section.title.toUpperCase(), margin + 5, cursorY + 5.5);
+
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(100, 116, 139);
+            doc.text(`${section.items.length} record${section.items.length !== 1 ? 's' : ''}`, pageW - margin, cursorY + 5.5, { align: 'right' });
+
+            cursorY += 10;
+
+            autoTable(doc, {
+                startY: cursorY,
+                head: [section.columns],
+                body: section.items.map(section.rows),
+                margin: { left: margin - 3, right: margin - 3 },
+                styles: {
+                    fontSize: 8,
+                    cellPadding: { top: 4, bottom: 4, left: 5, right: 5 },
+                    textColor: [226, 232, 240],
+                    fillColor: [15, 23, 42],
+                    lineColor: [30, 41, 59],
+                    lineWidth: 0.3,
+                    overflow: 'linebreak',
+                },
+                headStyles: {
+                    fillColor: [r, g, b],
+                    textColor: [255, 255, 255],
+                    fontStyle: 'bold',
+                    fontSize: 7.5,
+                },
+                alternateRowStyles: {
+                    fillColor: [21, 30, 48],
+                },
+                columnStyles: {
+                    0: { fontStyle: 'bold', cellWidth: 32 },
+                },
+                didDrawPage: () => {},
+            });
+
+            cursorY = doc.lastAutoTable.finalY + 14;
+        });
+
+        addFooter();
+
+        doc.save(`Smart-Campus-Facilities-Report-${now.toISOString().slice(0, 10)}.pdf`);
+    };
+
     return (
         <div className="flex bg-[#0a0e1b] min-h-screen font-sans text-slate-300">
             <Sidebar />
@@ -174,12 +425,24 @@ export default function AdminFacilityManagement() {
                         </h1>
                         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[5px] ml-1">Campus Resource & Infrastructure HUD</p>
                     </div>
-                    <button
-                        onClick={() => { resetForm(); setShowModal(true); }}
-                        className="bg-indigo-600 hover:bg-white text-white hover:text-indigo-600 px-8 py-3.5 rounded-2xl font-black shadow-xl shadow-indigo-500/10 transition-all flex items-center gap-3 active:scale-95"
-                    >
-                        + NEW RESOURCE
-                    </button>
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={generatePDF}
+                            disabled={facilities.length === 0}
+                            className="flex items-center gap-3 px-8 py-3.5 rounded-2xl font-black border border-indigo-500/40 text-indigo-400 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 disabled:opacity-30 disabled:cursor-not-allowed shadow-lg shadow-indigo-500/5 transition-all active:scale-95"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                            </svg>
+                            GET SUMMARY
+                        </button>
+                        <button
+                            onClick={() => { resetForm(); setShowModal(true); }}
+                            className="bg-indigo-600 hover:bg-white text-white hover:text-indigo-600 px-8 py-3.5 rounded-2xl font-black shadow-xl shadow-indigo-500/10 transition-all flex items-center gap-3 active:scale-95"
+                        >
+                            + NEW RESOURCE
+                        </button>
+                    </div>
                 </header>
 
                 <div className="px-12 py-4 sticky top-0 z-20 bg-[#0a0e1b]/80 backdrop-blur-xl border-b border-white/5 flex flex-col md:flex-row gap-8 items-center justify-between">
@@ -352,9 +615,16 @@ export default function AdminFacilityManagement() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                                     <div className="col-span-full">
                                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[4px] mb-4 ml-2">Resource Name</label>
-                                        <input required type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                            className="w-full px-8 py-6 bg-black/40 border-2 border-transparent rounded-[28px] focus:bg-white/5 focus:border-indigo-500 outline-none transition-all font-black text-white text-sm placeholder-slate-700 uppercase tracking-widest"
+                                        <input type="text" value={formData.name}
+                                            onChange={e => { setFormData({ ...formData, name: e.target.value }); setFormErrors(prev => ({ ...prev, name: undefined })); }}
+                                            className={`w-full px-8 py-6 bg-black/40 border-2 rounded-[28px] focus:bg-white/5 outline-none transition-all font-black text-white text-sm placeholder-slate-700 uppercase tracking-widest ${formErrors.name ? 'border-red-500/70' : 'border-transparent focus:border-indigo-500'}`}
                                             placeholder="Unique Identifier..." />
+                                        {formErrors.name && (
+                                            <p className="mt-2 ml-3 text-red-400 text-[10px] font-bold flex items-center gap-1.5">
+                                                <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                {formErrors.name}
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div>
@@ -373,15 +643,31 @@ export default function AdminFacilityManagement() {
                                     {formData.category === 'Study Area' && (
                                         <div>
                                             <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[4px] mb-4 ml-2">Units / Capacity</label>
-                                            <input required type="number" min="0" value={formData.capacity} onChange={e => setFormData({ ...formData, capacity: e.target.value })}
-                                                className="w-full px-8 py-6 bg-black/40 border-2 border-transparent rounded-[28px] focus:bg-white/5 focus:border-indigo-500 outline-none font-black text-white text-sm tracking-widest" placeholder="0" />
+                                            <input type="number" min="1" max="9999" value={formData.capacity}
+                                                onChange={e => { setFormData({ ...formData, capacity: e.target.value }); setFormErrors(prev => ({ ...prev, capacity: undefined })); }}
+                                                className={`w-full px-8 py-6 bg-black/40 border-2 rounded-[28px] focus:bg-white/5 outline-none font-black text-white text-sm tracking-widest transition-all ${formErrors.capacity ? 'border-red-500/70' : 'border-transparent focus:border-indigo-500'}`}
+                                                placeholder="0" />
+                                            {formErrors.capacity && (
+                                                <p className="mt-2 ml-3 text-red-400 text-[10px] font-bold flex items-center gap-1.5">
+                                                    <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                    {formErrors.capacity}
+                                                </p>
+                                            )}
                                         </div>
                                     )}
 
                                     <div>
                                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[4px] mb-4 ml-2">Zone / Loc</label>
-                                        <input required type="text" value={formData.location} onChange={e => setFormData({ ...formData, location: e.target.value })}
-                                            className="w-full px-8 py-6 bg-black/40 border-2 border-transparent rounded-[28px] focus:bg-white/5 focus:border-indigo-500 outline-none font-black text-white text-sm placeholder-slate-700 uppercase tracking-widest" placeholder="BLOCK / FLOOR..." />
+                                        <input type="text" value={formData.location}
+                                            onChange={e => { setFormData({ ...formData, location: e.target.value }); setFormErrors(prev => ({ ...prev, location: undefined })); }}
+                                            className={`w-full px-8 py-6 bg-black/40 border-2 rounded-[28px] focus:bg-white/5 outline-none font-black text-white text-sm placeholder-slate-700 uppercase tracking-widest transition-all ${formErrors.location ? 'border-red-500/70' : 'border-transparent focus:border-indigo-500'}`}
+                                            placeholder="BLOCK / FLOOR..." />
+                                        {formErrors.location && (
+                                            <p className="mt-2 ml-3 text-red-400 text-[10px] font-bold flex items-center gap-1.5">
+                                                <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                {formErrors.location}
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div>
@@ -429,11 +715,29 @@ export default function AdminFacilityManagement() {
                                             <>
                                                 <div>
                                                     <label className="block text-[9px] font-black text-indigo-400 mb-3 uppercase tracking-widest opacity-80">Brand Origin</label>
-                                                    <input type="text" name="brand" value={formData.attributes.brand || ''} onChange={handleAttributeChange} className="w-full p-5 bg-black/40 border border-white/5 rounded-[20px] font-black text-white text-[10px] uppercase tracking-widest focus:border-indigo-500 transition-all outline-none" placeholder="Vendor ID..." />
+                                                    <input type="text" name="brand" value={formData.attributes.brand || ''}
+                                                        onChange={e => { handleAttributeChange(e); setFormErrors(prev => ({ ...prev, brand: undefined })); }}
+                                                        className={`w-full p-5 bg-black/40 border rounded-[20px] font-black text-white text-[10px] uppercase tracking-widest focus:border-indigo-500 transition-all outline-none ${formErrors.brand ? 'border-red-500/70' : 'border-white/5'}`}
+                                                        placeholder="Vendor ID..." />
+                                                    {formErrors.brand && (
+                                                        <p className="mt-2 ml-1 text-red-400 text-[10px] font-bold flex items-center gap-1.5">
+                                                            <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                            {formErrors.brand}
+                                                        </p>
+                                                    )}
                                                 </div>
                                                 <div>
                                                     <label className="block text-[9px] font-black text-indigo-400 mb-3 uppercase tracking-widest opacity-80">Output Cap (BTU)</label>
-                                                    <input type="text" name="coolingCapacity" value={formData.attributes.coolingCapacity || ''} onChange={handleAttributeChange} className="w-full p-5 bg-black/40 border border-white/5 rounded-[20px] font-black text-white text-[10px] focus:border-indigo-500 transition-all outline-none" placeholder="12k, 18k..." />
+                                                    <input type="text" name="coolingCapacity" value={formData.attributes.coolingCapacity || ''}
+                                                        onChange={e => { handleAttributeChange(e); setFormErrors(prev => ({ ...prev, coolingCapacity: undefined })); }}
+                                                        className={`w-full p-5 bg-black/40 border rounded-[20px] font-black text-white text-[10px] focus:border-indigo-500 transition-all outline-none ${formErrors.coolingCapacity ? 'border-red-500/70' : 'border-white/5'}`}
+                                                        placeholder="12000, 18000..." />
+                                                    {formErrors.coolingCapacity && (
+                                                        <p className="mt-2 ml-1 text-red-400 text-[10px] font-bold flex items-center gap-1.5">
+                                                            <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                            {formErrors.coolingCapacity}
+                                                        </p>
+                                                    )}
                                                 </div>
                                             </>
                                         )}
@@ -450,7 +754,16 @@ export default function AdminFacilityManagement() {
                                                 </div>
                                                 <div>
                                                     <label className="block text-[9px] font-black text-indigo-400 mb-3 uppercase tracking-widest opacity-80">Interface Protocol</label>
-                                                    <input type="text" name="connectivity" value={formData.attributes.connectivity || ''} onChange={handleAttributeChange} className="w-full p-5 bg-black/40 border border-white/5 rounded-[20px] font-black text-white text-[10px] uppercase tracking-widest focus:border-indigo-500 outline-none" placeholder="HDMI / WIFI..." />
+                                                    <input type="text" name="connectivity" value={formData.attributes.connectivity || ''}
+                                                        onChange={e => { handleAttributeChange(e); setFormErrors(prev => ({ ...prev, connectivity: undefined })); }}
+                                                        className={`w-full p-5 bg-black/40 border rounded-[20px] font-black text-white text-[10px] uppercase tracking-widest focus:border-indigo-500 outline-none transition-all ${formErrors.connectivity ? 'border-red-500/70' : 'border-white/5'}`}
+                                                        placeholder="HDMI / WIFI..." />
+                                                    {formErrors.connectivity && (
+                                                        <p className="mt-2 ml-1 text-red-400 text-[10px] font-bold flex items-center gap-1.5">
+                                                            <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                            {formErrors.connectivity}
+                                                        </p>
+                                                    )}
                                                 </div>
                                             </>
                                         )}
