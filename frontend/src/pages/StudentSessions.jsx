@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useAuth } from '../App';
+import { useNavigate } from 'react-router-dom';
 import {
     Calendar,
     Clock,
@@ -11,7 +12,8 @@ import {
     CheckCircle,
     XCircle,
     Search,
-    Filter
+    Filter,
+    QrCode
 } from 'lucide-react';
 
 const StudentSessions = () => {
@@ -20,6 +22,8 @@ const StudentSessions = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterType, setFilterType] = useState('All');
     const { user } = useAuth();
+    const navigate = useNavigate();
+
 
     useEffect(() => {
         fetchSessions();
@@ -176,13 +180,22 @@ const StudentSessions = () => {
                                     </div>
 
                                     {isRegistered ? (
-                                        <button
-                                            onClick={() => handleCancel(session.id)}
-                                            className="w-full bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white border border-red-500/20 py-2.5 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2"
+                                        <div className="flex flex-col gap-2">
+                                            <button
+                                                onClick={() => navigate(`/student/qr/${session.id}`)}
+                                                className="w-full bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
+                                            >
+                                                <QrCode className="w-5 h-5" />
+                                                My QR Code
+                                            </button>
+                                            <button
+                                                onClick={() => handleCancel(session.id)}
+                                                className="w-full bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white border border-red-500/20 py-2.5 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2"
                                         >
-                                            <XCircle className="w-5 h-5" />
-                                            Cancel Booking
-                                        </button>
+                                                <XCircle className="w-5 h-5" />
+                                                Cancel Booking
+                                            </button>
+                                        </div>
                                     ) : (
                                         <button
                                             onClick={() => handleBook(session.id)}

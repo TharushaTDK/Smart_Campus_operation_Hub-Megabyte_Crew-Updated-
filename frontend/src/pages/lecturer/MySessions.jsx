@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../App';
 import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
 
 export default function MySessions() {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [sessions, setSessions] = useState([]);
     const [facilities, setFacilities] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -212,18 +214,27 @@ export default function MySessions() {
                                         </div>
                                         
                                         {session.status === 'Approved' && (
-                                            <div className="flex flex-col gap-1 px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-xl min-w-[120px]">
-                                                <div className="flex justify-between items-center">
+                                           <>
+                                              <div className="flex flex-col gap-1 px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-xl min-w-[120px]">
+                                                 <div className="flex justify-between items-center">
                                                     <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Attendance</span>
                                                     <span className="text-[10px] font-black text-white">{session.capacity - session.remainingCapacity} / {session.capacity}</span>
-                                                </div>
-                                                <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+                                                 </div>
+                                                 <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
                                                     <div 
                                                         className="h-full bg-indigo-500 rounded-full transition-all duration-500"
                                                         style={{ width: `${((session.capacity - session.remainingCapacity) / session.capacity) * 100}%` }}
                                                     ></div>
-                                                </div>
-                                            </div>
+                                                 </div>
+                                               </div>
+                                               <button
+                                                    onClick={() => navigate(`/lecturer/attendance/${session.id}`)}
+                                                    className="px-5 py-2 bg-green-600 hover:bg-green-500 text-white font-black uppercase tracking-[2px] text-xs rounded-xl transition-all shadow-lg shadow-green-500/20 flex items-center gap-2"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                    Scan Attendance
+                                                </button>
+                                           </>
                                         )}
                                     </div>
                                 </div>
