@@ -1,213 +1,175 @@
 package com.smartcampus.services;
 
 import jakarta.mail.MessagingException;
-import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.io.UnsupportedEncodingException;
+import java.util.logging.Logger;
 
 @Service
 public class EmailService {
 
+    private static final Logger log = Logger.getLogger(EmailService.class.getName());
+
     private final JavaMailSender mailSender;
-
-    @Value("${spring.mail.username}")
-    private String senderEmail;
-
-    @Value("${app.frontend-url}")
-    private String frontendUrl;
 
     public EmailService(JavaMailSender mailSender) {
         this.mailSender = mailSender;
     }
 
-    @Async
-    public void sendWelcomeEmail(String toEmail, String name) {
+    /**
+     * Sends a notification email when admin/staff replies to a ticket.
+     */
+    public void sendTicketReplyNotification(String toEmail, String toName,
+                                             String ticketId, String ticketSubject,
+                                             String replyContent, String replierName) {
+        String subject = "Re: [Ticket #" + ticketId.substring(Math.max(0, ticketId.length() - 6)).toUpperCase() + "] " + ticketSubject;
+
+        String body = buildHtml(
+            toName,
+            "You have a new reply on your support ticket.",
+            ticketSubject,
+            ticketId,
+            buildReplyBlock(replierName, replyContent),
+            "#3b82f6",
+            "VIEW YOUR TICKET",
+            "A member of the Smart Campus support team has responded. Log in to continue the conversation."
+        );
+
+        sendHtml(toEmail, subject, body);
+    }
+
+    /**
+     * Sends a notification email when ticket status changes.
+     */
+    public void sendTicketStatusNotification(String toEmail, String toName,
+                                              String ticketId, String ticketSubject,
+                                              String newStatus, String note) {
+        String subject = "Ticket Update: [#" + ticketId.substring(Math.max(0, ticketId.length() - 6)).toUpperCase() + "] " + ticketSubject;
+
+        String statusColor = statusColor(newStatus);
+        String statusBlock = buildStatusBlock(newStatus, statusColor, note);
+
+        String body = buildHtml(
+            toName,
+            "Your support ticket status has been updated.",
+            ticketSubject,
+            ticketId,
+            statusBlock,
+            statusColor,
+            "VIEW YOUR TICKET",
+            "The Smart Campus support team has updated your ticket. Log in to see the full details."
+        );
+
+        sendHtml(toEmail, subject, body);
+    }
+
+    /* ── private helpers ──────────────────────────────────────────── */
+
+    private void sendHtml(String to, String subject, String html) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-            helper.setFrom(new InternetAddress(senderEmail, "SmartCampus"));
-            helper.setTo(toEmail);
-            helper.setSubject("Welcome to SmartCampus – Your Account is Ready!");
-            helper.setText(buildWelcomeHtml(name, toEmail), true);
-
+            helper.setFrom("tharushatheekshana60@gmail.com", "Smart Campus Support");
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(html, true);
             mailSender.send(message);
-            System.out.println("[EmailService] Welcome email sent successfully to: " + toEmail);
-
-        } catch (MessagingException | UnsupportedEncodingException e) {
-            System.err.println("[EmailService] MIME error sending to " + toEmail + ": " + e.getMessage());
-            e.printStackTrace();
-        } catch (MailException e) {
-            System.err.println("[EmailService] SMTP error sending to " + toEmail + ": " + e.getMessage());
-            e.printStackTrace();
+            log.info("Email sent to " + to + " | " + subject);
+        } catch (MessagingException | java.io.UnsupportedEncodingException e) {
+            log.severe("Failed to send email to " + to + ": " + e.getMessage());
         }
     }
 
-    private String buildWelcomeHtml(String name, String email) {
-        String safeUrl = frontendUrl;
-        return "<!DOCTYPE html>" +
-            "<html lang=\"en\">" +
-            "<head>" +
-            "<meta charset=\"UTF-8\" />" +
-            "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"/>" +
-            "<title>Welcome to SmartCampus</title>" +
-            "</head>" +
-            "<body style=\"margin:0;padding:0;background-color:#0f172a;font-family:'Segoe UI',Arial,sans-serif;\">" +
-
-            "<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color:#0f172a;padding:40px 16px;\">" +
-            "<tr><td align=\"center\">" +
-            "<table width=\"600\" cellpadding=\"0\" cellspacing=\"0\" style=\"max-width:600px;width:100%;\">" +
-
-            // ── Header ──
-            "<tr>" +
-            "<td style=\"background:#1d4ed8;border-radius:16px 16px 0 0;padding:48px 40px 36px;text-align:center;\">" +
-            "<div style=\"display:inline-block;background:rgba(255,255,255,0.15);border-radius:12px;padding:12px 24px;margin-bottom:20px;\">" +
-            "<span style=\"color:#ffffff;font-size:22px;font-weight:900;letter-spacing:3px;\">SMART CAMPUS</span>" +
-            "</div>" +
-            "<h1 style=\"margin:0 0 8px;color:#ffffff;font-size:30px;font-weight:800;\">Welcome aboard,</h1>" +
-            "<h2 style=\"margin:0;color:#bfdbfe;font-size:26px;font-weight:700;\">" + escapeHtml(name) + "!</h2>" +
-            "</td>" +
-            "</tr>" +
-
-            // ── Intro ──
-            "<tr>" +
-            "<td style=\"background:#1e293b;padding:32px 40px 24px;\">" +
-            "<p style=\"margin:0 0 14px;color:#cbd5e1;font-size:16px;line-height:1.7;\">" +
-            "Your SmartCampus account has been successfully created. You are registered as a " +
-            "<strong style=\"color:#60a5fa;\">Student</strong> on the platform." +
-            "</p>" +
-            "<p style=\"margin:0;color:#94a3b8;font-size:15px;\">Registered email: " +
-            "<strong style=\"color:#e2e8f0;\">" + escapeHtml(email) + "</strong></p>" +
-            "</td>" +
-            "</tr>" +
-
-            divider() +
-
-            // ── About ──
-            "<tr>" +
-            "<td style=\"background:#1e293b;padding:24px 40px;\">" +
-            "<h3 style=\"margin:0 0 12px;color:#ffffff;font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:2px;\">About SmartCampus</h3>" +
-            "<p style=\"margin:0;color:#94a3b8;font-size:14px;line-height:1.8;\">" +
-            "SmartCampus is a unified digital platform for students, lecturers, and campus staff. " +
-            "It brings together session booking, facility management, support tickets, and real-time " +
-            "notifications — so you can focus on learning, not logistics." +
-            "</p>" +
-            "</td>" +
-            "</tr>" +
-
-            divider() +
-
-            // ── Navigation ──
-            "<tr>" +
-            "<td style=\"background:#1e293b;padding:24px 40px;\">" +
-            "<h3 style=\"margin:0 0 18px;color:#ffffff;font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:2px;\">Platform Navigation</h3>" +
-            navCard("#60a5fa", "Study Sessions",
-                "Browse all approved study sessions across campus facilities. Register for sessions that fit your schedule — seats fill up fast.") +
-            navCard("#818cf8", "Support Tickets",
-                "Raise a ticket for any campus issue — broken equipment, room problems, or IT. Track every update in real time.") +
-            navCard("#34d399", "Live Notifications",
-                "The bell icon in the navbar shows real-time alerts for session approvals, ticket replies, and campus activity.") +
-            navCard("#f59e0b", "My Profile",
-                "Update your name, profile picture, and personal details from the Profile page in the top navigation.") +
-            "</td>" +
-            "</tr>" +
-
-            divider() +
-
-            // ── Guidelines ──
-            "<tr>" +
-            "<td style=\"background:#1e293b;padding:24px 40px;\">" +
-            "<h3 style=\"margin:0 0 18px;color:#ffffff;font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:2px;\">Student Guidelines</h3>" +
-            guideRow("01", "Browsing Sessions",
-                "Go to Sessions in the navbar to see all approved sessions. Each card shows facility, date, time, and available seats.") +
-            guideRow("02", "Registering for a Session",
-                "Click Register on any session card. Once a session is full, registration closes automatically.") +
-            guideRow("03", "Raising a Support Ticket",
-                "Navigate to Tickets and click New Ticket. Describe the issue — an admin will respond and you will be notified.") +
-            guideRow("04", "Staying Informed",
-                "Watch the bell icon — it lights up whenever something needs your attention. Click any notification to jump to the page.") +
-            "</td>" +
-            "</tr>" +
-
-            divider() +
-
-            // ── Booking Rules ──
-            "<tr>" +
-            "<td style=\"background:#1e293b;padding:24px 40px;\">" +
-            "<h3 style=\"margin:0 0 14px;color:#ffffff;font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:2px;\">Booking Rules</h3>" +
-            "<ul style=\"margin:0;padding-left:20px;color:#94a3b8;font-size:14px;line-height:2.2;\">" +
-            "<li>Weekday sessions: <strong style=\"color:#e2e8f0;\">8:00 AM – 5:00 PM</strong></li>" +
-            "<li>Weekend sessions: <strong style=\"color:#e2e8f0;\">8:00 AM – 8:00 PM</strong></li>" +
-            "<li>All slots are in <strong style=\"color:#e2e8f0;\">30-minute increments</strong></li>" +
-            "<li>Sessions require <strong style=\"color:#e2e8f0;\">admin approval</strong> before appearing to students</li>" +
-            "<li>Each facility has a <strong style=\"color:#e2e8f0;\">fixed seat capacity</strong> — register early</li>" +
-            "</ul>" +
-            "</td>" +
-            "</tr>" +
-
-            // ── CTA ──
-            "<tr>" +
-            "<td style=\"background:#1e293b;padding:8px 40px 40px;text-align:center;\">" +
-            "<a href=\"" + safeUrl + "\" " +
-            "style=\"display:inline-block;background:#2563eb;color:#ffffff;font-size:14px;font-weight:800;" +
-            "text-decoration:none;padding:16px 44px;border-radius:50px;letter-spacing:2px;text-transform:uppercase;\">" +
-            "Go to SmartCampus &rarr;" +
-            "</a>" +
-            "</td>" +
-            "</tr>" +
-
-            // ── Footer ──
-            "<tr>" +
-            "<td style=\"background:#0f172a;border-radius:0 0 16px 16px;padding:28px 40px;text-align:center;\">" +
-            "<p style=\"margin:0 0 8px;color:#475569;font-size:13px;\">SmartCampus Operation Hub &middot; Megabyte Crew</p>" +
-            "<p style=\"margin:0;color:#334155;font-size:12px;\">" +
-            "You received this email because you created an account on SmartCampus.<br/>" +
-            "If this wasn't you, please contact your campus administrator immediately." +
-            "</p>" +
-            "</td>" +
-            "</tr>" +
-
-            "</table>" +
-            "</td></tr>" +
-            "</table>" +
-            "</body>" +
-            "</html>";
+    private String buildReplyBlock(String name, String content) {
+        return "<div style='background:#1e293b;border-left:4px solid #3b82f6;border-radius:8px;padding:20px 24px;margin:20px 0'>"
+             + "<p style='color:#94a3b8;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 8px'>Reply from " + escHtml(name) + "</p>"
+             + "<p style='color:#e2e8f0;font-size:14px;line-height:1.7;margin:0'>" + escHtml(content) + "</p>"
+             + "</div>";
     }
 
-    private String divider() {
-        return "<tr><td style=\"background:#1e293b;padding:0 40px;\">" +
-               "<div style=\"height:1px;background:#334155;\"></div></td></tr>";
+    private String buildStatusBlock(String status, String color, String note) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<div style='text-align:center;margin:24px 0'>")
+          .append("<span style='display:inline-block;background:").append(color).append("22;color:").append(color)
+          .append(";border:1px solid ").append(color).append("55;border-radius:50px;padding:8px 28px;")
+          .append("font-size:12px;font-weight:800;letter-spacing:3px;text-transform:uppercase'>")
+          .append(escHtml(status)).append("</span></div>");
+
+        if (note != null && !note.isBlank()) {
+            sb.append("<div style='background:#1e293b;border-left:4px solid ").append(color)
+              .append(";border-radius:8px;padding:16px 20px;margin:16px 0'>")
+              .append("<p style='color:#94a3b8;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 6px'>Note</p>")
+              .append("<p style='color:#e2e8f0;font-size:14px;line-height:1.6;margin:0;font-style:italic'>\"").append(escHtml(note)).append("\"</p>")
+              .append("</div>");
+        }
+        return sb.toString();
     }
 
-    private String navCard(String color, String title, String desc) {
-        return "<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"margin-bottom:12px;\">" +
-               "<tr><td style=\"background:#0f172a;border:1px solid #334155;border-radius:10px;padding:14px 18px;\">" +
-               "<p style=\"margin:0 0 5px;color:" + color + ";font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:2px;\">" + title + "</p>" +
-               "<p style=\"margin:0;color:#94a3b8;font-size:13px;line-height:1.6;\">" + desc + "</p>" +
-               "</td></tr></table>";
+    private String buildHtml(String toName, String subtitle, String ticketSubject,
+                              String ticketId, String contentBlock, String accentColor,
+                              String ctaText, String footerNote) {
+        String shortId = ticketId.substring(Math.max(0, ticketId.length() - 6)).toUpperCase();
+        return "<!DOCTYPE html><html><head><meta charset='UTF-8'></head><body style='"
+             + "margin:0;padding:0;background:#0a0f1c;font-family:Arial,sans-serif'>"
+             + "<table width='100%' cellpadding='0' cellspacing='0' style='background:#0a0f1c;padding:40px 20px'><tr><td>"
+             + "<table width='100%' cellpadding='0' cellspacing='0' style='max-width:600px;margin:0 auto'>"
+
+             // Header
+             + "<tr><td style='background:#131c31;border-radius:16px 16px 0 0;padding:32px 40px;border-bottom:1px solid #1e293b;text-align:center'>"
+             + "<p style='margin:0 0 4px;color:" + accentColor + ";font-size:10px;font-weight:800;letter-spacing:4px;text-transform:uppercase'>Smart Campus · Support System</p>"
+             + "<h1 style='margin:0;color:#ffffff;font-size:22px;font-weight:900;letter-spacing:-0.5px'>Ticket Notification</h1>"
+             + "</td></tr>"
+
+             // Body
+             + "<tr><td style='background:#131c31;padding:32px 40px'>"
+             + "<p style='color:#94a3b8;font-size:13px;margin:0 0 6px'>Hello, <strong style='color:#e2e8f0'>" + escHtml(toName) + "</strong></p>"
+             + "<p style='color:#64748b;font-size:12px;margin:0 0 24px'>" + subtitle + "</p>"
+
+             // Ticket info row
+             + "<div style='background:#0f172a;border-radius:10px;padding:14px 20px;margin-bottom:20px;display:flex'>"
+             + "<table width='100%' cellpadding='0' cellspacing='0'><tr>"
+             + "<td style='color:#64748b;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase'>Ticket</td>"
+             + "<td style='color:#64748b;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;text-align:right'>ID_#" + shortId + "</td>"
+             + "</tr><tr>"
+             + "<td colspan='2' style='color:#e2e8f0;font-size:14px;font-weight:700;padding-top:6px'>" + escHtml(ticketSubject) + "</td>"
+             + "</tr></table></div>"
+
+             // Dynamic content block
+             + contentBlock
+
+             // Footer note
+             + "<p style='color:#475569;font-size:11px;line-height:1.6;margin:24px 0 0'>" + footerNote + "</p>"
+             + "</td></tr>"
+
+             // CTA button
+             + "<tr><td style='background:#131c31;padding:0 40px 32px;text-align:center'>"
+             + "<a href='http://localhost:5173/tickets' style='display:inline-block;background:" + accentColor
+             + ";color:#ffffff;text-decoration:none;font-size:10px;font-weight:800;letter-spacing:3px;"
+             + "text-transform:uppercase;padding:14px 36px;border-radius:50px'>" + ctaText + "</a>"
+             + "</td></tr>"
+
+             // Bottom bar
+             + "<tr><td style='background:#0f172a;border-radius:0 0 16px 16px;padding:16px 40px;text-align:center'>"
+             + "<p style='margin:0;color:#334155;font-size:10px;letter-spacing:1px'>Smart Campus Operation Hub · Automated Notification · Do not reply to this email</p>"
+             + "</td></tr>"
+
+             + "</table></td></tr></table></body></html>";
     }
 
-    private String guideRow(String num, String title, String desc) {
-        return "<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"margin-bottom:12px;\">" +
-               "<tr>" +
-               "<td style=\"vertical-align:top;width:36px;padding-top:2px;\">" +
-               "<span style=\"color:#2563eb;font-size:16px;font-weight:900;\">" + num + "</span>" +
-               "</td>" +
-               "<td style=\"padding-left:12px;\">" +
-               "<p style=\"margin:0 0 4px;color:#e2e8f0;font-size:14px;font-weight:700;\">" + title + "</p>" +
-               "<p style=\"margin:0;color:#94a3b8;font-size:13px;line-height:1.6;\">" + desc + "</p>" +
-               "</td>" +
-               "</tr></table>";
+    private String statusColor(String status) {
+        return switch (status.toUpperCase()) {
+            case "IN_PROGRESS" -> "#f59e0b";
+            case "RESOLVED"    -> "#10b981";
+            case "REJECTED"    -> "#ef4444";
+            case "CLOSED"      -> "#64748b";
+            default            -> "#3b82f6";
+        };
     }
 
-    private String escapeHtml(String text) {
+    private String escHtml(String text) {
         if (text == null) return "";
         return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
     }

@@ -6,6 +6,7 @@ import com.smartcampus.models.User;
 import com.smartcampus.models.Role;
 import com.smartcampus.repositories.TicketRepository;
 import com.smartcampus.services.CloudinaryService;
+import com.smartcampus.services.EmailService;
 import com.smartcampus.services.NotificationService;
 import com.smartcampus.services.UserService;
 import org.springframework.http.ResponseEntity;
@@ -28,12 +29,14 @@ public class TicketController {
     private final UserService userService;
     private final NotificationService notificationService;
     private final CloudinaryService cloudinaryService;
+    private final EmailService emailService;
 
-    public TicketController(TicketRepository ticketRepository, UserService userService, NotificationService notificationService, CloudinaryService cloudinaryService) {
+    public TicketController(TicketRepository ticketRepository, UserService userService, NotificationService notificationService, CloudinaryService cloudinaryService, EmailService emailService) {
         this.ticketRepository = ticketRepository;
         this.userService = userService;
         this.notificationService = notificationService;
         this.cloudinaryService = cloudinaryService;
+        this.emailService = emailService;
     }
 
     @PostMapping(consumes = {"multipart/form-data"})
@@ -196,6 +199,15 @@ public class TicketController {
             } catch (Exception e) {
                 System.err.println("Notification failed: " + e.getMessage());
             }
+            userService.getUserById(ticket.getSenderId()).ifPresent(owner -> {
+                if (owner.getEmail() != null) {
+                    emailService.sendTicketStatusNotification(
+                        owner.getEmail(), owner.getName(),
+                        ticket.getId(), ticket.getSubject(),
+                        status.toUpperCase(), note
+                    );
+                }
+            });
         }
         return ResponseEntity.ok(saved);
     }
@@ -242,6 +254,20 @@ public class TicketController {
             } catch (Exception e) {
                 System.err.println("Notification failed: " + e.getMessage());
             }
+        }
+
+        // Email the ticket owner when admin/staff replies (not when owner replies to themselves)
+        boolean replierIsOwner = user.getId().equals(ticket.getSenderId());
+        if (!replierIsOwner && ticket.getSenderId() != null) {
+            userService.getUserById(ticket.getSenderId()).ifPresent(owner -> {
+                if (owner.getEmail() != null) {
+                    emailService.sendTicketReplyNotification(
+                        owner.getEmail(), owner.getName(),
+                        ticket.getId(), ticket.getSubject(),
+                        content, user.getName()
+                    );
+                }
+            });
         }
         return ResponseEntity.ok(saved);
     }
@@ -299,6 +325,55 @@ public class TicketController {
 
         return ResponseEntity.ok(ticket);
     }
+    @PutMapping(value = "/{id}", consumes = {"multipart/form-data"})
+    public ResponseEntity<?> updateTicket(
+            @PathVariable String id,
+            @RequestParam("subject") String subject,
+            @RequestParam("description") String description,
+            @RequestParam("category") String category,
+            @RequestParam("priority") String priority,
+            @RequestParam(value = "contactDetails", required = false) String contactDetails,
+            @RequestParam(value = "phoneNumber", required = false) String phoneNumber,
+            @RequestParam(value = "attachments", required = false) MultipartFile[] attachments) {
+
+        User user = userService.getCurrentUser().orElse(null);
+        if (user == null) return ResponseEntity.status(401).body("Unauthorized");
+
+        Ticket ticket = ticketRepository.findById(id).orElse(null);
+        if (ticket == null) return ResponseEntity.status(404).body("Ticket not found");
+
+        if (!ticket.getSenderId().equals(user.getId())) {
+            return ResponseEntity.status(403).body("You can only edit your own tickets");
+        }
+        if (!"OPEN".equals(ticket.getStatus())) {
+            return ResponseEntity.badRequest().body("Only OPEN tickets can be edited");
+        }
+
+        ticket.setSubject(subject);
+        ticket.setDescription(description);
+        ticket.setCategory(category);
+        ticket.setPriority(priority);
+        ticket.setContactDetails(contactDetails);
+        ticket.setPhoneNumber(phoneNumber);
+        ticket.setUpdatedAt(LocalDateTime.now());
+
+        if (attachments != null && attachments.length > 0) {
+            if (attachments.length > 3) return ResponseEntity.badRequest().body("Maximum 3 attachments allowed");
+            List<String> urls = new ArrayList<>();
+            for (MultipartFile file : attachments) {
+                try {
+                    urls.add(cloudinaryService.uploadImage(file));
+                } catch (IOException e) {
+                    return ResponseEntity.status(500).body("Image upload failed: " + e.getMessage());
+                }
+            }
+            ticket.setAttachments(urls);
+        }
+
+        Ticket saved = ticketRepository.save(ticket);
+        return ResponseEntity.ok(saved);
+    }
+
     @DeleteMapping("/v2/{id}")
     public ResponseEntity<?> deleteTicket(@PathVariable String id) {
         System.out.println("Processing V2 deleteTicket for ticket " + id);

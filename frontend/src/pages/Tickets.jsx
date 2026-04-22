@@ -25,6 +25,8 @@ export default function Tickets() {
     });
     const [attachments, setAttachments] = useState([]);
     const [reply, setReply] = useState('');
+    const [formErrors, setFormErrors] = useState({});
+    const [editingTicket, setEditingTicket] = useState(null);
 
     useEffect(() => {
         console.log("User Tickets Loaded V2 - Sync Check");
@@ -59,6 +61,12 @@ export default function Tickets() {
 
     const handleSubmitTicket = async (e) => {
         e.preventDefault();
+        const errors = validate();
+        if (Object.keys(errors).length > 0) {
+            setFormErrors(errors);
+            return;
+        }
+        setFormErrors({});
         const formData = new FormData();
         formData.append('subject', newTicket.subject);
         formData.append('description', newTicket.description);
@@ -66,21 +74,47 @@ export default function Tickets() {
         formData.append('priority', newTicket.priority);
         formData.append('contactDetails', newTicket.contactDetails);
         formData.append('phoneNumber', newTicket.phoneNumber);
-        
-        attachments.forEach(file => {
-            formData.append('attachments', file);
-        });
+        attachments.forEach(file => formData.append('attachments', file));
 
         try {
-            await axios.post('/api/tickets', formData, { withCredentials: true });
-            toast.success('Ticket submitted successfully');
+            if (editingTicket) {
+                await axios.put(`/api/tickets/${editingTicket.id}`, formData, { withCredentials: true });
+                toast.success('Ticket updated successfully');
+            } else {
+                await axios.post('/api/tickets', formData, { withCredentials: true });
+                toast.success('Ticket submitted successfully');
+            }
             setShowForm(false);
+            setEditingTicket(null);
             setNewTicket({ subject: '', description: '', category: 'IT', priority: 'MEDIUM', contactDetails: '', phoneNumber: '' });
             setAttachments([]);
             fetchTickets();
         } catch (err) {
-            toast.error(err.response?.data || 'Failed to submit ticket');
+            toast.error(err.response?.data || (editingTicket ? 'Failed to update ticket' : 'Failed to submit ticket'));
         }
+    };
+
+    const handleOpenEdit = (ticket) => {
+        setEditingTicket(ticket);
+        setNewTicket({
+            subject: ticket.subject || '',
+            description: ticket.description || '',
+            category: ticket.category || 'IT',
+            priority: ticket.priority || 'MEDIUM',
+            contactDetails: ticket.contactDetails || '',
+            phoneNumber: ticket.phoneNumber || '',
+        });
+        setAttachments([]);
+        setFormErrors({});
+        setShowForm(true);
+    };
+
+    const handleCloseForm = () => {
+        setShowForm(false);
+        setEditingTicket(null);
+        setNewTicket({ subject: '', description: '', category: 'IT', priority: 'MEDIUM', contactDetails: '', phoneNumber: '' });
+        setAttachments([]);
+        setFormErrors({});
     };
 
     const handleSendReply = async (e) => {
@@ -118,6 +152,45 @@ export default function Tickets() {
         } catch (err) {
             toast.error('Failed to delete comment');
         }
+    };
+
+    const validate = () => {
+        const errors = {};
+        const phone = newTicket.phoneNumber.replace(/\s/g, '');
+        const contact = newTicket.contactDetails.trim();
+
+        if (!newTicket.subject.trim()) {
+            errors.subject = 'Subject is required';
+        } else if (newTicket.subject.trim().length < 5) {
+            errors.subject = 'Subject must be at least 5 characters';
+        } else if (newTicket.subject.trim().length > 100) {
+            errors.subject = 'Subject cannot exceed 100 characters';
+        }
+
+        if (!newTicket.description.trim()) {
+            errors.description = 'Description is required';
+        } else if (newTicket.description.trim().length < 20) {
+            errors.description = 'Description must be at least 20 characters';
+        } else if (newTicket.description.trim().length > 500) {
+            errors.description = 'Description cannot exceed 500 characters';
+        }
+
+        if (!phone) {
+            errors.phoneNumber = 'Phone number is required';
+        } else if (!/^(\+94|0)[0-9]{9}$/.test(phone)) {
+            errors.phoneNumber = 'Enter a valid number (e.g. 0771234567 or +94771234567)';
+        }
+
+        if (contact && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact)) {
+            errors.contactDetails = 'Enter a valid email address';
+        }
+
+        const oversized = attachments.filter(f => f.size > 5 * 1024 * 1024);
+        if (oversized.length > 0) {
+            errors.attachments = `${oversized.length} file(s) exceed the 5 MB limit`;
+        }
+
+        return errors;
     };
 
     const categories = ['IT', 'ELECTRICAL', 'PLUMBING', 'FURNITURE', 'OTHER'];
@@ -166,8 +239,8 @@ export default function Tickets() {
                             </div>
                         </div>
                         {user.role !== 'MAINTAIN_STAFF' && (
-                            <button 
-                                onClick={() => setShowForm(!showForm)}
+                            <button
+                                onClick={() => { setEditingTicket(null); setNewTicket({ subject: '', description: '', category: 'IT', priority: 'MEDIUM', contactDetails: '', phoneNumber: '' }); setAttachments([]); setFormErrors({}); setShowForm(!showForm); }}
                                 className="p-3 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl shadow-xl shadow-blue-500/20 transition-all active:scale-95 group"
                             >
                                 <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
@@ -254,13 +327,22 @@ export default function Tickets() {
                                         </p>
                                     </div>
                                 </div>
-                                <div className="flex gap-3">
+                                <div className="flex gap-3 items-center">
                                     <div className="px-5 py-2.5 glass-card rounded-[1rem] text-[10px] font-black uppercase tracking-[0.2em] text-blue-400">
                                         LEVEL: {selectedTicket.priority}
                                     </div>
                                     <div className="px-5 py-2.5 glass-card rounded-[1rem] text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
                                         TYPE: {selectedTicket.category}
                                     </div>
+                                    {selectedTicket.senderId === user.id && selectedTicket.status === 'OPEN' && (
+                                        <button
+                                            onClick={() => handleOpenEdit(selectedTicket)}
+                                            className="flex items-center gap-2 px-5 py-2.5 bg-amber-500/10 hover:bg-amber-500 border border-amber-500/30 hover:border-amber-500 text-amber-400 hover:text-white rounded-[1rem] text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 group/edit"
+                                        >
+                                            <Edit2 className="w-3.5 h-3.5 group-hover/edit:rotate-12 transition-transform" />
+                                            Edit
+                                        </button>
+                                    )}
                                 </div>
                             </div>
 
@@ -417,15 +499,22 @@ export default function Tickets() {
                                     <div className="relative">
                                         <div className="absolute -top-40 -left-40 w-80 h-80 bg-blue-600/5 blur-[100px] rounded-full pointer-events-none group-hover:bg-blue-600/10 transition-colors duration-1000"></div>
                                         
-                                        <button onClick={() => setShowForm(false)} className="absolute top-0 right-0 p-3 glass-button rounded-2xl text-slate-500 hover:text-white transition-all hover:rotate-90 z-50">
+                                        <button onClick={handleCloseForm} className="absolute top-0 right-0 p-3 glass-button rounded-2xl text-slate-500 hover:text-white transition-all hover:rotate-90 z-50">
                                             <Plus className="w-6 h-6 rotate-45" />
                                         </button>
 
                                         <div className="mb-10 text-center">
                                             <div className="inline-block px-4 py-1.5 glass-button rounded-full text-[9px] font-black text-blue-500 uppercase tracking-[0.5em] mb-4 italic ring-1 ring-blue-500/30">
-                                                INITIALIZE_REPORT_SEQUENCE
+                                                {editingTicket ? 'MODIFY_REPORT_SEQUENCE' : 'INITIALIZE_REPORT_SEQUENCE'}
                                             </div>
-                                            <h2 className="text-4xl font-black text-white uppercase tracking-tighter italic">Report <span className="text-blue-500">Incident</span></h2>
+                                            <h2 className="text-4xl font-black text-white uppercase tracking-tighter italic">
+                                                {editingTicket ? <>Update <span className="text-amber-400">Incident</span></> : <>Report <span className="text-blue-500">Incident</span></>}
+                                            </h2>
+                                            {editingTicket && (
+                                                <p className="text-[10px] font-black text-amber-400/60 uppercase tracking-widest mt-2">
+                                                    ID_#{editingTicket.id.slice(-6).toUpperCase()} · Only OPEN tickets can be edited
+                                                </p>
+                                            )}
                                         </div>
                                         
                                         <form onSubmit={handleSubmitTicket} className="space-y-8">
@@ -453,72 +542,106 @@ export default function Tickets() {
                                             </div>
 
                                             <div className="grid grid-cols-2 gap-6">
-                                                <div className="space-y-3">
+                                                <div className="space-y-2">
                                                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Phone Intelligence</label>
-                                                    <input 
-                                                        placeholder="+94 7X XXX XXXX" 
-                                                        className="w-full bg-[#131c31]/50 border border-white/10 rounded-2xl p-5 outline-none focus:border-blue-500/50 text-sm font-bold transition-all"
+                                                    <input
+                                                        placeholder="+94 7X XXX XXXX"
+                                                        className={`w-full bg-[#131c31]/50 border rounded-2xl p-5 outline-none focus:border-blue-500/50 text-sm font-bold transition-all ${formErrors.phoneNumber ? 'border-red-500/60' : 'border-white/10'}`}
                                                         value={newTicket.phoneNumber}
-                                                        onChange={e => setNewTicket({...newTicket, phoneNumber: e.target.value})}
-                                                        required
+                                                        onChange={e => { setNewTicket({...newTicket, phoneNumber: e.target.value}); setFormErrors(prev => ({...prev, phoneNumber: undefined})); }}
                                                     />
+                                                    {formErrors.phoneNumber && (
+                                                        <p className="text-red-400 text-[10px] font-bold ml-1 flex items-center gap-1">
+                                                            <AlertCircle className="w-3 h-3 shrink-0" />{formErrors.phoneNumber}
+                                                        </p>
+                                                    )}
                                                 </div>
-                                                <div className="space-y-3">
+                                                <div className="space-y-2">
                                                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Alternate Contact</label>
-                                                    <input 
-                                                        placeholder="Email or alternate ID..." 
-                                                        className="w-full bg-[#131c31]/50 border border-white/10 rounded-2xl p-5 outline-none focus:border-blue-500/50 text-sm font-bold transition-all"
+                                                    <input
+                                                        placeholder="Email or alternate ID..."
+                                                        className={`w-full bg-[#131c31]/50 border rounded-2xl p-5 outline-none focus:border-blue-500/50 text-sm font-bold transition-all ${formErrors.contactDetails ? 'border-red-500/60' : 'border-white/10'}`}
                                                         value={newTicket.contactDetails}
-                                                        onChange={e => setNewTicket({...newTicket, contactDetails: e.target.value})}
+                                                        onChange={e => { setNewTicket({...newTicket, contactDetails: e.target.value}); setFormErrors(prev => ({...prev, contactDetails: undefined})); }}
                                                     />
+                                                    {formErrors.contactDetails && (
+                                                        <p className="text-red-400 text-[10px] font-bold ml-1 flex items-center gap-1">
+                                                            <AlertCircle className="w-3 h-3 shrink-0" />{formErrors.contactDetails}
+                                                        </p>
+                                                    )}
                                                 </div>
                                             </div>
 
-                                            <div className="space-y-3">
-                                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Subject Intelligence</label>
-                                                <input 
-                                                    placeholder="System fault overview..." 
-                                                    className="w-full bg-[#131c31]/50 border border-white/10 rounded-2xl p-5 outline-none focus:border-blue-500/50 text-sm font-bold transition-all"
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between items-center ml-1">
+                                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Subject Intelligence</label>
+                                                    <span className={`text-[10px] font-bold ${newTicket.subject.length > 100 ? 'text-red-400' : newTicket.subject.length >= 80 ? 'text-yellow-400' : 'text-slate-600'}`}>
+                                                        {newTicket.subject.length}/100
+                                                    </span>
+                                                </div>
+                                                <input
+                                                    placeholder="System fault overview..."
+                                                    maxLength={110}
+                                                    className={`w-full bg-[#131c31]/50 border rounded-2xl p-5 outline-none focus:border-blue-500/50 text-sm font-bold transition-all ${formErrors.subject ? 'border-red-500/60' : 'border-white/10'}`}
                                                     value={newTicket.subject}
-                                                    onChange={e => setNewTicket({...newTicket, subject: e.target.value})}
-                                                    required
+                                                    onChange={e => { setNewTicket({...newTicket, subject: e.target.value}); setFormErrors(prev => ({...prev, subject: undefined})); }}
                                                 />
+                                                {formErrors.subject && (
+                                                    <p className="text-red-400 text-[10px] font-bold ml-1 flex items-center gap-1">
+                                                        <AlertCircle className="w-3 h-3 shrink-0" />{formErrors.subject}
+                                                    </p>
+                                                )}
                                             </div>
 
-                                            <div className="space-y-3">
-                                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Log Analytics / Description</label>
-                                                <textarea 
-                                                    placeholder="Detailed incident logs..." 
-                                                    className="w-full bg-[#131c31]/50 border border-white/10 rounded-2xl p-5 outline-none focus:border-blue-500/50 text-sm h-32 transition-all leading-relaxed"
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between items-center ml-1">
+                                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Log Analytics / Description</label>
+                                                    <span className={`text-[10px] font-bold ${newTicket.description.length > 500 ? 'text-red-400' : newTicket.description.length >= 450 ? 'text-yellow-400' : newTicket.description.length >= 20 ? 'text-emerald-500' : 'text-slate-600'}`}>
+                                                        {newTicket.description.length}/500
+                                                    </span>
+                                                </div>
+                                                <textarea
+                                                    placeholder="Detailed incident logs..."
+                                                    maxLength={510}
+                                                    className={`w-full bg-[#131c31]/50 border rounded-2xl p-5 outline-none focus:border-blue-500/50 text-sm h-32 transition-all leading-relaxed ${formErrors.description ? 'border-red-500/60' : 'border-white/10'}`}
                                                     value={newTicket.description}
-                                                    onChange={e => setNewTicket({...newTicket, description: e.target.value})}
-                                                    required
+                                                    onChange={e => { setNewTicket({...newTicket, description: e.target.value}); setFormErrors(prev => ({...prev, description: undefined})); }}
                                                 />
+                                                {formErrors.description && (
+                                                    <p className="text-red-400 text-[10px] font-bold ml-1 flex items-center gap-1">
+                                                        <AlertCircle className="w-3 h-3 shrink-0" />{formErrors.description}
+                                                    </p>
+                                                )}
                                             </div>
 
                                             <div className="grid grid-cols-2 gap-6 items-end">
-                                                <div className="space-y-3">
+                                                <div className="space-y-2">
                                                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Multimedia Evidence</label>
-                                                    <div className="flex items-center gap-4 p-5 bg-[#131c31]/50 border-2 border-dashed border-white/10 rounded-2xl hover:border-blue-500 transition-all cursor-pointer relative group/upload shadow-inner">
+                                                    <div className={`flex items-center gap-4 p-5 bg-[#131c31]/50 border-2 border-dashed rounded-2xl hover:border-blue-500 transition-all cursor-pointer relative group/upload shadow-inner ${formErrors.attachments ? 'border-red-500/60' : 'border-white/10'}`}>
                                                         <ImageIcon className="w-7 h-7 text-slate-600 group-hover/upload:text-blue-500 transition-all group-hover/upload:scale-110" />
                                                         <div className="flex-1">
-                                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{attachments.length > 0 ? `${attachments.length} ASSETS_LOADED` : 'UPLOAD_INTEL'}</p>
-                                                            <p className="text-[8px] font-bold text-slate-600 uppercase mt-1 tracking-tighter">MAX_3_X_VISUALS</p>
+                                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{attachments.length > 0 ? `${attachments.length} ASSETS_LOADED` : editingTicket ? 'REPLACE_INTEL' : 'UPLOAD_INTEL'}</p>
+                                                            <p className="text-[8px] font-bold text-slate-600 uppercase mt-1 tracking-tighter">{editingTicket ? `CURRENT: ${editingTicket.attachments?.length || 0} · NEW UPLOAD REPLACES ALL` : 'MAX_3 · 5MB EACH'}</p>
                                                         </div>
-                                                        <input 
-                                                            type="file" 
-                                                            multiple 
+                                                        <input
+                                                            type="file"
+                                                            multiple
                                                             accept="image/*"
-                                                            onChange={handleFileChange}
+                                                            onChange={e => { handleFileChange(e); setFormErrors(prev => ({...prev, attachments: undefined})); }}
                                                             className="absolute inset-0 opacity-0 cursor-pointer"
                                                         />
                                                     </div>
+                                                    {formErrors.attachments && (
+                                                        <p className="text-red-400 text-[10px] font-bold ml-1 flex items-center gap-1">
+                                                            <AlertCircle className="w-3 h-3 shrink-0" />{formErrors.attachments}
+                                                        </p>
+                                                    )}
                                                 </div>
-                                                <button 
-                                                    type="submit" 
-                                                    className="w-full py-5 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-[0.3em] text-[10px] rounded-2xl transition-all shadow-2xl shadow-blue-500/30 active:scale-95 italic flex items-center justify-center gap-3 group/btn"
+                                                <button
+                                                    type="submit"
+                                                    className={`w-full py-5 text-white font-black uppercase tracking-[0.3em] text-[10px] rounded-2xl transition-all active:scale-95 italic flex items-center justify-center gap-3 group/btn shadow-2xl ${editingTicket ? 'bg-amber-500 hover:bg-amber-400 shadow-amber-500/30' : 'bg-blue-600 hover:bg-blue-500 shadow-blue-500/30'}`}
                                                 >
-                                                    Submit Protocol <Send className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                                                    {editingTicket ? <><Edit2 className="w-4 h-4" /> Update Protocol</> : <>Submit Protocol <Send className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" /></>}
                                                 </button>
                                             </div>
                                         </form>
