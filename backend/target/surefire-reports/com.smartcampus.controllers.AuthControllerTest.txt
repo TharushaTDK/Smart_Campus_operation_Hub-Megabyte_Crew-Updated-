@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.smartcampus.controllers.AuthControllerTest
 -------------------------------------------------------------------------------
-Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 7.028 s -- in com.smartcampus.controllers.AuthControllerTest
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 4.039 s -- in com.smartcampus.controllers.AuthControllerTest
