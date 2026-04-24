@@ -100,7 +100,7 @@ public class MaintenanceController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+      @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> deleteMaintenanceItem(@PathVariable String id) {
         Optional<MaintenanceItem> opt = maintenanceItemRepository.findById(id);
         if (opt.isPresent()) {
