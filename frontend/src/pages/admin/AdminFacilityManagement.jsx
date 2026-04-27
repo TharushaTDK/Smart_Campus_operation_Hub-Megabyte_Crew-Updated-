@@ -211,7 +211,7 @@ export default function AdminFacilityManagement() {
 
     const filteredFacilities = facilities.filter(f => {
         const matchesCategory = activeFilter === 'All' || f.category === activeFilter;
-        const matchesSearch = f.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesSearch = (f.name || '').toLowerCase().includes(searchTerm.toLowerCase());
         return matchesCategory && matchesSearch;
     });
 
